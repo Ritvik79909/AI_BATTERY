@@ -5,7 +5,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class VehicleRequest {
+public class VehicleResponse {
+
+    private Long id;
 
     // Core identifiers
     private String nickname;
@@ -25,4 +27,6 @@ public class VehicleRequest {
     private Boolean fastChargeSupported;
     private Double maxAcPowerKw;
     private Double maxDcPowerKw;
+
+    private Boolean isDefault;
 }

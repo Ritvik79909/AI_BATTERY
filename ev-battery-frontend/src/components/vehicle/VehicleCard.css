@@ -1,0 +1,132 @@
+.vehicle-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 24px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  min-width: 280px;
+}
+
+.vehicle-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.vc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.vc-icon-wrapper {
+  background: #ecfccb;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vc-icon {
+  color: #65a30d;
+}
+
+.vc-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.vc-action-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 0.9rem;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.vc-action-btn:hover {
+  color: #4b5563;
+}
+
+.vc-action-btn.delete:hover {
+  color: #ef4444;
+}
+
+.vc-image-placeholder {
+  height: 120px;
+  background: #f9fafb;
+  border-radius: 50%;
+  margin: 0.5rem auto 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.vc-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.vc-label,
+.vc-stat-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.vc-model {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.vc-stats-grid {
+  display: flex;
+  justify-content: space-between;
+}
+
+.vc-stat-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.vc-status-bar {
+  background: #dcfce7;
+  border-radius: 12px;
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.vc-status-text {
+  color: #166534;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.vc-status-indicator {
+  background: #166534;
+  color: white;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -2,22 +2,21 @@
   width: 100vw;
   min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #6EE7B7;
-  padding: 2rem;
-  overflow-y: auto;
+  flex-direction: column;
+  background: linear-gradient(135deg, #f0f4f1 0%, #e8efe9 100%);
+  padding: 0;
   box-sizing: border-box;
   overflow-x: hidden;
 }
 
 .vehicle-setup-card {
   width: 100%;
-  max-width: 600px;
+  max-width: 800px;
   background: white;
   border-radius: 32px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.05);
   padding: 3rem;
+  margin: 2rem auto;
   animation: fadeIn 0.5s ease-out;
 }
 
@@ -37,6 +36,89 @@
   font-size: 0.95rem;
 }
 
+.vehicle-list-container {
+  width: 100%;
+  max-width: 1200px;
+  padding: 2rem;
+  margin: 0 auto;
+}
+
+.list-header {
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.list-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.list-header p {
+  color: #6b7280;
+}
+
+.vehicle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.add-vehicle-card {
+  background: rgba(255, 255, 255, 0.4);
+  border: 2px dashed #10b981;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  min-height: 280px;
+  /* Adjusted height */
+  transition: all 0.3s ease;
+}
+
+.add-vehicle-card:hover {
+  background: rgba(16, 185, 129, 0.05);
+  transform: translateY(-5px);
+}
+
+.add-icon-wrapper {
+  background: white;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1rem;
+}
+
+.add-vehicle-card span {
+  font-weight: 600;
+  color: #10b981;
+  font-size: 1.1rem;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  font-weight: 500;
+  padding: 0;
+}
+
+.back-btn:hover {
+  color: #10b981;
+}
+
 .setup-tabs {
   display: flex;
   gap: 1rem;
@@ -46,7 +128,7 @@
   border-radius: 16px;
 }
 
-.tab-btn {
+.setup-tab {
   flex: 1;
   display: flex;
   align-items: center;
@@ -62,13 +144,13 @@
   transition: all 0.2s ease;
 }
 
-.tab-btn.active {
+.setup-tab.active {
   background: white;
   color: #10B981;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-.tab-btn:hover:not(.active) {
+.setup-tab:hover:not(.active) {
   color: #374151;
   background: #E5E7EB;
 }

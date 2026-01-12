@@ -77,10 +77,10 @@
 }
 
 .dash-nav-item.active {
-  background: white;
-  color: #3f6212;
+  background: #10b981;
+  color: white;
   font-weight: 600;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .user-profile {

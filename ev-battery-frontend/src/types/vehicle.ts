@@ -3,9 +3,16 @@ export interface VehicleFormData {
   make: string;
   model: string;
   variant: string;
-  year: number;
-  batteryCapacityKwh: number;
+  vin: string;
+  year: number | null;
+  batteryCapacityKwh: number | null;
+  usableCapacityKwh?: number | null;
+  ratedRangeKm?: number | null;
+  fastChargeSupported: boolean;
+  maxAcPowerKw?: number | null;
+  maxDcPowerKw?: number | null;
   chemistry: 'NMC' | 'LFP';
+  vehicleType: 'Car' | 'Bike' | 'Scooter';
 }
 
 export interface Vehicle extends VehicleFormData {

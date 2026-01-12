@@ -1,23 +1,11 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { authService } from '../services/authService';
-import { FaBolt, FaBatteryFull, FaChargingStation, FaExclamationTriangle, FaInfoCircle, FaHourglassHalf, FaTemperatureHigh, FaCar } from 'react-icons/fa';
+import { FaBolt, FaBatteryFull, FaChargingStation, FaExclamationTriangle, FaInfoCircle, FaHourglassHalf, FaTemperatureHigh } from 'react-icons/fa';
 import { MdOutlineElectricalServices } from 'react-icons/md';
+import Navbar from '../components/Navbar';
 import './Dashboard.css';
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [activeTab, setActiveTab] = useState('dashboard');
-
-  const handleLogout = () => {
-    authService.logout();
-    navigate('/login');
-  };
-
-  const handleVehicleSetup = () => {
-    navigate('/vehicle-setup');
-  };
 
   // Mock Data
   const batteryHealth = {
@@ -30,40 +18,7 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      {/* Header */}
-      <header className="dash-header">
-        <div className="dash-brand">
-          <FaBolt size={24} color="#10b981" />
-          <span>AI-Based Battery Optimization</span>
-        </div>
-
-        <nav className="dash-nav">
-          {['Dashboard', 'Battery Health', 'Charging Optimization', 'AI Assistant', 'Stations'].map((item) => (
-            <div
-              key={item}
-              className={`dash-nav-item ${activeTab === item.toLowerCase() ? 'active' : ''}`}
-            >
-              {item}
-            </div>
-          ))}
-        </nav>
-
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div className="user-profile" onClick={handleVehicleSetup} title="Manage Vehicle">
-            <div className="icon-btn">
-              <FaCar size={20} color="#4b5563" />
-            </div>
-          </div>
-
-          <div className="user-profile" onClick={handleLogout} title="Click to Logout">
-            <img
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
-              alt="User"
-              className="avatar"
-            />
-          </div>
-        </div>
-      </header>
+      <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
 
       <div className="dash-grid">
         {/* Top Stats Row */}
