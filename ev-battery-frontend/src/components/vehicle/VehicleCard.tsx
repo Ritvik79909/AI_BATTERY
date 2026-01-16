@@ -10,19 +10,20 @@ interface VehicleCardProps {
 }
 
 import carImg from '../../assets/vehicles/car.png';
-import bikeImg from '../../assets/vehicles/bike.jpg';
+import bikeImg from '../../assets/vehicles/bike.jpg'; // Updated to .jpg
 import scooterImg from '../../assets/vehicles/scooter.jpg';
 
 const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onEdit, onDelete }) => {
   // Determine icon/image based on vehicleType
-  const typeImages: Record<string, string> = {
-    'Car': carImg,
-    'Bike': bikeImg,
-    'Scooter': scooterImg
+  const getVehicleAsset = (type: string) => {
+    const normalizedType = type?.toLowerCase();
+
+    if (normalizedType === 'bike') return { img: bikeImg, icon: FaMotorcycle };
+    if (normalizedType === 'scooter' || normalizedType === 'scooty') return { img: scooterImg, icon: FaMotorcycle };
+    return { img: carImg, icon: FaCar };
   };
 
-  const imageSrc = typeImages[vehicle.vehicleType] || carImg;
-  const Icon = vehicle.vehicleType === 'Bike' || vehicle.vehicleType === 'Scooter' ? FaMotorcycle : FaCar;
+  const { img: imageSrc, icon: Icon } = getVehicleAsset(vehicle.vehicleType);
 
   return (
     <div className="vehicle-card">
@@ -36,11 +37,11 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onEdit, onDelete }) 
         </div>
       </div>
 
-      <div className="vc-image-placeholder" style={{ background: 'none', padding: 0, overflow: 'hidden' }}>
+      <div className="vc-image-placeholder">
         <img
           src={imageSrc}
           alt={vehicle.model}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
         />
       </div>
 

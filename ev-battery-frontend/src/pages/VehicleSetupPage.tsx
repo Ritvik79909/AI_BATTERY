@@ -16,6 +16,7 @@ const VehicleSetupPage: React.FC = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const navigate = useNavigate();
 
   const fetchVehicles = async () => {
@@ -30,7 +31,8 @@ const VehicleSetupPage: React.FC = () => {
         if (data.length === 0) {
           setView('add');
         } else {
-          setView('list');
+          // If we are in add view and just added a vehicle, we want to go back to list
+          // But if we are initially loading, we should respect the state if it was preserved (it's not persisted here though)
         }
       } else {
         console.error('Vehicles data is not an array:', data);
@@ -38,10 +40,8 @@ const VehicleSetupPage: React.FC = () => {
         const possibleArray = (data as any).data || (data as any).vehicles || [];
         if (Array.isArray(possibleArray)) {
           setVehicles(possibleArray);
-          setView(possibleArray.length > 0 ? 'list' : 'add');
         } else {
           setVehicles([]);
-          setView('add');
         }
       }
     } catch (err) {
@@ -57,8 +57,17 @@ const VehicleSetupPage: React.FC = () => {
   }, []);
 
   const handleSuccess = () => {
-    fetchVehicles(); // Refetch and switch to list
+    fetchVehicles(); // Refetch to get the latest list
+    setView('list'); // Switch to list view
+    setSuccessMsg('Vehicle added successfully!');
+    setTimeout(() => setSuccessMsg(''), 3000); // Clear message after 3 seconds
+  };
+
+  const handleUploadSuccess = () => {
+    fetchVehicles();
     setView('list');
+    setSuccessMsg(`Vehicle details extracted and saved successfully.`);
+    setTimeout(() => setSuccessMsg(''), 5000);
   };
 
   return (
@@ -75,6 +84,20 @@ const VehicleSetupPage: React.FC = () => {
           textAlign: 'center'
         }}>
           {error}
+        </div>
+      )}
+
+      {successMsg && (
+        <div className="success-banner" style={{
+          background: '#ECFDF5',
+          color: '#065F46',
+          padding: '1rem',
+          margin: '1rem 2rem',
+          borderRadius: '8px',
+          textAlign: 'center',
+          border: '1px solid #10B981'
+        }}>
+          {successMsg}
         </div>
       )}
 
@@ -133,12 +156,7 @@ const VehicleSetupPage: React.FC = () => {
               </div>
             ) : (
               <div className="fade-in">
-                <DocumentUploadPanel onSuccess={handleSuccess} />
-                {/* Note: DocumentUploadPanel might need logic to pass data to VehicleForm if they are separate.
-                    For now, assuming DocumentUploadPanel handles its flow or we just switch tab.
-                    Actually, Previous implementation passed `initialData`?
-                    Let's check previous code.
-                */}
+                <DocumentUploadPanel onSuccess={handleUploadSuccess} />
               </div>
             )}
           </div>

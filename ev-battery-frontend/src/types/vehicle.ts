@@ -26,3 +26,7 @@ export interface VehicleDraft {
   status: 'PROCESSING' | 'READY' | 'FAILED';
   extractedData?: Partial<VehicleFormData>;
 }
+
+export interface UploadDocumentResponse {
+  draftId: string;
+}

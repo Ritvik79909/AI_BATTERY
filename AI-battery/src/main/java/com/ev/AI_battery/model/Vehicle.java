@@ -1,5 +1,6 @@
 package com.ev.AI_battery.model;
 
+import com.ev.AI_battery.model.VehicleType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,6 +18,9 @@ public class Vehicle {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private VehicleType vehicleType = VehicleType.CAR;
 
     // Core identifiers
     private String nickname;

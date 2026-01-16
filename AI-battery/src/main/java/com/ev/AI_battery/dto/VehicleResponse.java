@@ -1,5 +1,6 @@
 package com.ev.AI_battery.dto;
 
+import com.ev.AI_battery.model.VehicleType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,6 +28,8 @@ public class VehicleResponse {
     private Boolean fastChargeSupported;
     private Double maxAcPowerKw;
     private Double maxDcPowerKw;
+
+    private VehicleType vehicleType;
 
     private Boolean isDefault;
 }

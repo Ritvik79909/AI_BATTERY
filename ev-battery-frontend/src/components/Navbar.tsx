@@ -38,11 +38,19 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
       </div>
 
       <nav className="dash-nav">
-        {['Dashboard', 'Battery Health', 'Charging Optimization', 'AI Assistant', 'Stations'].map((item) => (
+        {['Dashboard', 'Telemetry', 'Battery Health', 'Charging Optimization', 'AI Assistant'].map((item) => (
           <div
             key={item}
             className={`dash-nav-item ${activeTab === item.toLowerCase() ? 'active' : ''}`}
-            onClick={() => handleTabClick(item)}
+            onClick={() => {
+              if (item === 'Telemetry') {
+                navigate('/telemetry');
+              } else if (item === 'Dashboard') {
+                navigate('/dashboard');
+              } else {
+                handleTabClick(item);
+              }
+            }}
           >
             {item}
           </div>

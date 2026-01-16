@@ -5,6 +5,7 @@ import LandingPage from './pages/LandingPage'
 import OAuthSuccess from './pages/OAuthSuccess'
 import Dashboard from './pages/Dashboard'
 import VehicleSetupPage from './pages/VehicleSetupPage'
+import BatteryTelemetryPage from './pages/BatteryTelemetryPage'
 import PrivateRoute from './components/PrivateRoute'
 import './App.css'
 
@@ -33,6 +34,14 @@ function App() {
         element={
           <PrivateRoute>
             <VehicleSetupPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/telemetry"
+        element={
+          <PrivateRoute>
+            <BatteryTelemetryPage />
           </PrivateRoute>
         }
       />

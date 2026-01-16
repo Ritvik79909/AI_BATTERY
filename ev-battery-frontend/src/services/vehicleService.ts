@@ -1,5 +1,5 @@
 import api from './api';
-import type { Vehicle, VehicleDraft, VehicleFormData } from '../types/vehicle';
+import type { Vehicle, VehicleDraft, VehicleFormData, UploadDocumentResponse } from '../types/vehicle';
 
 export const vehicleService = {
   // Manual Entry: Create a new vehicle
@@ -15,11 +15,11 @@ export const vehicleService = {
   },
 
   // Smart Upload: Upload a document
-  uploadVehicleDocument: async (file: File): Promise<{ draftId: string }> => {
+  uploadVehicleDocument: async (file: File): Promise<UploadDocumentResponse> => {
     const formData = new FormData();
-    formData.append('document', file);
+    formData.append('file', file);
 
-    const response = await api.post<{ draftId: string }>('/vehicles/documents/upload', formData, {
+    const response = await api.post<UploadDocumentResponse>('/vehicles/documents/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
