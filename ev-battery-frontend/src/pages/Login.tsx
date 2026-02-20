@@ -33,8 +33,7 @@ const Login = () => {
   };
 
   const handleGoogleLogin = () => {
-    // Redirect to backend Google OAuth endpoint
-    authService.redirectToGoogleLogin();
+    window.location.href = "http://localhost:8080/oauth2/authorization/google";
   };
 
   return (
@@ -59,6 +58,7 @@ const Login = () => {
               <div className="form-group">
                 <input
                   id="email"
+                  name="email"
                   type="email"
                   className="form-input"
                   placeholder="Email"
@@ -72,6 +72,7 @@ const Login = () => {
               <div className="form-group">
                 <input
                   id="password"
+                  name="password"
                   type="password"
                   className="form-input"
                   placeholder="Password"
@@ -85,6 +86,8 @@ const Login = () => {
               <div className="form-options">
                 <label className="remember-me">
                   <input
+                    id="rememberMe"
+                    name="rememberMe"
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}

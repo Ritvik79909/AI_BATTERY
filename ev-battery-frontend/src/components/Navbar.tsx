@@ -38,13 +38,23 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
       </div>
 
       <nav className="dash-nav">
-        {['Dashboard', 'Telemetry', 'Battery Health', 'Charging Optimization', 'AI Assistant'].map((item) => (
+        {['Dashboard', 'Telemetry', 'Battery Health', 'Charging History', 'Charging Habits', 'Charging Optimization', 'AI Coach'].map((item) => (
           <div
             key={item}
             className={`dash-nav-item ${activeTab === item.toLowerCase() ? 'active' : ''}`}
             onClick={() => {
               if (item === 'Telemetry') {
                 navigate('/telemetry');
+              } else if (item === 'Battery Health') {
+                navigate('/battery-health');
+              } else if (item === 'Charging History') {
+                navigate('/charging-history');
+              } else if (item === 'Charging Habits') {
+                navigate('/charging-habits');
+              } else if (item === 'Charging Optimization') {
+                navigate('/charging-optimization');
+              } else if (item === 'AI Coach') {
+                navigate('/ai-coach');
               } else if (item === 'Dashboard') {
                 navigate('/dashboard');
               } else {

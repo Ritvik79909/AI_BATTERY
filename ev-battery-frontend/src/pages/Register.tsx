@@ -117,6 +117,7 @@ const Register = () => {
               <div className="form-group">
                 <input
                   id="name"
+                  name="name"
                   type="text"
                   className={`form-input ${fieldErrors.name ? 'error' : ''}`}
                   placeholder="Full Name"
@@ -137,6 +138,7 @@ const Register = () => {
               <div className="form-group">
                 <input
                   id="email"
+                  name="email"
                   type="email"
                   className={`form-input ${fieldErrors.email ? 'error' : ''}`}
                   placeholder="Email"
@@ -157,6 +159,7 @@ const Register = () => {
               <div className="form-group">
                 <input
                   id="password"
+                  name="password"
                   type="password"
                   className={`form-input ${fieldErrors.password ? 'error' : ''}`}
                   placeholder="Password"
@@ -177,6 +180,7 @@ const Register = () => {
               <div className="form-group">
                 <input
                   id="confirmPassword"
+                  name="confirmPassword"
                   type="password"
                   className={`form-input ${fieldErrors.confirmPassword ? 'error' : ''}`}
                   placeholder="Confirm Password"

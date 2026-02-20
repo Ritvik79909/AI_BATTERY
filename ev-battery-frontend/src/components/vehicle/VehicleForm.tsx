@@ -86,8 +86,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, onSuccess }) => 
       <div className="form-section">
         <h3>Basic Vehicle Info</h3>
         <div className="form-group">
-          <label>Nickname</label>
+          <label htmlFor="nickname">Nickname</label>
           <input
+            id="nickname"
             type="text"
             name="nickname"
             placeholder="e.g. My Tesla"
@@ -116,8 +117,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, onSuccess }) => 
 
         <div className="form-row">
           <div className="form-group half">
-            <label>Make</label>
+            <label htmlFor="make">Make</label>
             <select
+              id="make"
               name="make"
               className="form-input"
               value={formData.make}
@@ -135,8 +137,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, onSuccess }) => 
             </select>
           </div>
           <div className="form-group half">
-            <label>Model</label>
+            <label htmlFor="model">Model</label>
             <input
+              id="model"
               type="text"
               name="model"
               placeholder="e.g. Nexon EV"
@@ -150,8 +153,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, onSuccess }) => 
 
         <div className="form-row">
           <div className="form-group half">
-            <label>Variant</label>
+            <label htmlFor="variant">Variant</label>
             <input
+              id="variant"
               type="text"
               name="variant"
               placeholder="e.g. Max"
@@ -161,8 +165,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, onSuccess }) => 
             />
           </div>
           <div className="form-group half">
-            <label>Year</label>
+            <label htmlFor="year">Year</label>
             <input
+              id="year"
               type="number"
               name="year"
               className="form-input"
@@ -180,8 +185,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, onSuccess }) => 
         <h3>Battery & Range</h3>
         <div className="form-row">
           <div className="form-group half">
-            <label>Total Capacity (kWh)</label>
+            <label htmlFor="batteryCapacityKwh">Total Capacity (kWh)</label>
             <input
+              id="batteryCapacityKwh"
               type="number"
               name="batteryCapacityKwh"
               className="form-input"
@@ -193,8 +199,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, onSuccess }) => 
             />
           </div>
           <div className="form-group half">
-            <label>Usable Capacity (kWh)</label>
+            <label htmlFor="usableCapacityKwh">Usable Capacity (kWh)</label>
             <input
+              id="usableCapacityKwh"
               type="number"
               name="usableCapacityKwh"
               placeholder="Optional"
@@ -209,8 +216,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, onSuccess }) => 
 
         <div className="form-row">
           <div className="form-group half">
-            <label>Rated Range (km)</label>
+            <label htmlFor="ratedRangeKm">Rated Range (km)</label>
             <input
+              id="ratedRangeKm"
               type="number"
               name="ratedRangeKm"
               placeholder="WLTP / ARAI"
@@ -221,8 +229,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, onSuccess }) => 
             />
           </div>
           <div className="form-group half">
-            <label>Chemistry</label>
+            <label htmlFor="chemistry">Chemistry</label>
             <select
+              id="chemistry"
               name="chemistry"
               className="form-input"
               value={formData.chemistry}
@@ -241,6 +250,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, onSuccess }) => 
         <div className="form-group checkbox-group">
           <label className="checkbox-label">
             <input
+              id="fastChargeSupported"
               type="checkbox"
               name="fastChargeSupported"
               checked={formData.fastChargeSupported}
@@ -252,8 +262,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, onSuccess }) => 
 
         <div className="form-row">
           <div className="form-group half">
-            <label>Max AC Power (kW)</label>
+            <label htmlFor="maxAcPowerKw">Max AC Power (kW)</label>
             <input
+              id="maxAcPowerKw"
               type="number"
               name="maxAcPowerKw"
               placeholder="e.g. 7.2"
@@ -264,8 +275,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, onSuccess }) => 
             />
           </div>
           <div className="form-group half">
-            <label>Max DC Power (kW)</label>
+            <label htmlFor="maxDcPowerKw">Max DC Power (kW)</label>
             <input
+              id="maxDcPowerKw"
               type="number"
               name="maxDcPowerKw"
               placeholder="e.g. 50"

@@ -51,7 +51,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         // Redirect to frontend with token
         response.sendRedirect(
-                "http://localhost:5173/oauth-success?token=" + token
+                "http://localhost:5174/oauth-success?token=" + token
         );
     }
 }

@@ -6,6 +6,11 @@ import OAuthSuccess from './pages/OAuthSuccess'
 import Dashboard from './pages/Dashboard'
 import VehicleSetupPage from './pages/VehicleSetupPage'
 import BatteryTelemetryPage from './pages/BatteryTelemetryPage'
+import BatteryHealthPage from './pages/BatteryHealthPage'
+import ChargingHistoryPage from './pages/ChargingHistoryPage'
+import ChargingHabitsPage from './pages/ChargingHabitsPage'
+import ChargingOptimizationPage from './pages/ChargingOptimizationPage'
+import AiCoachingPage from './pages/AiCoachingPage'
 import PrivateRoute from './components/PrivateRoute'
 import './App.css'
 
@@ -42,6 +47,46 @@ function App() {
         element={
           <PrivateRoute>
             <BatteryTelemetryPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/battery-health"
+        element={
+          <PrivateRoute>
+            <BatteryHealthPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/charging-history"
+        element={
+          <PrivateRoute>
+            <ChargingHistoryPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/charging-habits"
+        element={
+          <PrivateRoute>
+            <ChargingHabitsPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/charging-optimization"
+        element={
+          <PrivateRoute>
+            <ChargingOptimizationPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/ai-coach"
+        element={
+          <PrivateRoute>
+            <AiCoachingPage />
           </PrivateRoute>
         }
       />

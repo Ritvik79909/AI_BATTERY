@@ -122,6 +122,7 @@ const DocumentUploadPanel: React.FC<Props> = ({ onSuccess }) => {
             <input
               type="file"
               id="file-upload"
+              name="file"
               className="hidden-input"
               accept=".pdf,image/*"
               onChange={(e) => e.target.files && handleFile(e.target.files[0])}
