@@ -6,6 +6,8 @@ import com.ev.AI_battery.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -16,6 +18,7 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final UserRepository userRepository;
@@ -25,7 +28,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(
             HttpServletRequest request,
             HttpServletResponse response,
-            org.springframework.security.core.Authentication authentication
+            Authentication authentication
     ) throws IOException {
 
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
@@ -33,6 +36,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
         String providerId = oAuth2User.getAttribute("sub");
+
+        log.info("OAuth2 login success for email: {}", email);
 
         Optional<User> existingUser = userRepository.findByEmail(email);
 
@@ -48,10 +53,15 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         });
 
         String token = jwtUtil.generateToken(user.getEmail());
+        log.info("Generated JWT token for user: {}", email);
 
         // Redirect to frontend with token
-        response.sendRedirect(
-                "http://localhost:5174/oauth-success?token=" + token
-        );
+        String redirectUrl = "http://localhost:5174/oauth-success?token=" + token;
+        log.info("Redirecting to: {}", redirectUrl);
+
+        response.setStatus(HttpServletResponse.SC_FOUND);
+        response.setHeader("Location", redirectUrl);
+        response.setHeader("Access-Control-Allow-Origin", "http://localhost:5174");
+        response.setHeader("Access-Control-Allow-Credentials", "true");
     }
 }

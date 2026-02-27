@@ -9,7 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -111,5 +113,18 @@ public class BatteryHealthService {
         if (score >= 80) return "Healthy";
         if (score >= 70) return "Moderate";
         return "Needs Attention";
+    }
+
+    // Add this method to BatteryHealthService.java
+    public Map<String, Object> getHealthSummary(Vehicle vehicle) {
+        SoHResponse soh = getSoH(vehicle);
+        RULResponse rul = getRUL(vehicle);
+        HealthScoreResponse score = getScore(vehicle);
+
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("soh", soh);
+        summary.put("rul", rul);
+        summary.put("score", score);
+        return summary;
     }
 }

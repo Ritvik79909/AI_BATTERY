@@ -101,3 +101,26 @@ export interface ChargingHabitsData {
   insights: string[];
   recommendation: string;
 }
+
+// XAI: Explainable AI Battery Explanation Types
+export interface ContributingFactor {
+  factorName: string;               // e.g. "Fast charging usage"
+  impact: 'Positive' | 'Negative';  // direction of effect on health score
+  contribution: number;             // signed points, e.g. -8.3 or +5.1
+}
+
+export interface BatteryExplanationData {
+  vehicleId: string;
+  healthScore: number;
+  explanation: string;              // 2-3 sentence natural-language text
+  topFactors: ContributingFactor[];
+  generatedAt: string;              // ISO timestamp
+}
+
+export interface ExplanationHistoryItem {
+  id?: string;
+  vehicleId: string;
+  healthScore: number;
+  explanation: string;
+  generatedAt: string;              // ISO timestamp
+}

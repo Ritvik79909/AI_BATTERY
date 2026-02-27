@@ -1,11 +1,20 @@
-import { useState } from 'react';
-import { FaBolt, FaBatteryFull, FaChargingStation, FaExclamationTriangle, FaInfoCircle, FaHourglassHalf, FaTemperatureHigh } from 'react-icons/fa';
+import { useState, useEffect } from 'react';
+import { FaBolt, FaBatteryFull, FaChargingStation, FaHourglassHalf, FaTemperatureHigh } from 'react-icons/fa';
 import { MdOutlineElectricalServices } from 'react-icons/md';
 import Navbar from '../components/Navbar';
+import AlertSummaryCard from '../components/AlertSummaryCard';
+import { vehicleService } from '../services/vehicleService';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [vehicleId, setVehicleId] = useState<string | null>(null);
+
+  useEffect(() => {
+    vehicleService.getVehicles().then((vehicles) => {
+      if (vehicles.length > 0) setVehicleId(vehicles[0].id);
+    }).catch(() => { });
+  }, []);
 
   // Mock Data
   const batteryHealth = {
@@ -175,31 +184,8 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Alerts & Notifications */}
-          <div className="dash-card">
-            <div className="card-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>Alerts & Notifications</div>
-            <div className="notifications-list">
-              <div className="notif-item">
-                <div className="notif-icon">
-                  <FaInfoCircle size={16} />
-                </div>
-                <div className="notif-content">
-                  <h4>System Update</h4>
-                  <p>AI Model updated successfully.</p>
-                </div>
-              </div>
-
-              <div className="notif-item warning">
-                <div className="notif-icon">
-                  <FaExclamationTriangle size={16} />
-                </div>
-                <div className="notif-content">
-                  <h4>Unusual Drain Detected</h4>
-                  <p>Slightly higher overnight drain noticed.</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Live Anomaly Alert Summary */}
+          <AlertSummaryCard vehicleId={vehicleId} />
         </div>
       </div>
     </div>

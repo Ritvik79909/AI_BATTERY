@@ -1,0 +1,256 @@
+/* ═══════════════════════════════════════════════════════════════════
+   ExplanationHistory – timeline styles
+   Matches BatteryHealthPage/BatteryExplanation theme.
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── Card wrapper ────────────────────────────────────────────────── */
+.exh-card {
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f3f4f6;
+  overflow: hidden;
+  transition: box-shadow 0.25s ease;
+  animation: fadeInUp 0.55s ease-out both;
+}
+
+.exh-card:hover {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.09);
+}
+
+/* ── Header button ───────────────────────────────────────────────── */
+.exh-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2rem;
+  gap: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease;
+}
+
+.exh-header:hover:not(:disabled) {
+  background: #fafafa;
+}
+
+.exh-header:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.exh-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.exh-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #e0e7ff, #ede9fe);
+  color: #6366f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.exh-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.exh-sub {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-top: 0.1rem;
+}
+
+.exh-chevron {
+  color: #9ca3af;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+/* ── Body ────────────────────────────────────────────────────────── */
+.exh-body {
+  border-top: 1px solid #f3f4f6;
+  padding: 1.5rem 2rem 2rem;
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+/* ── Loading ─────────────────────────────────────────────────────── */
+.exh-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 2rem 0;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.exh-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(99, 102, 241, 0.12);
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ── Error / Empty ───────────────────────────────────────────────── */
+.exh-error {
+  background: #fef2f2;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+
+.exh-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2.5rem 1rem;
+  color: #9ca3af;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.exh-empty span {
+  font-size: 2rem;
+}
+
+.exh-empty p {
+  margin: 0;
+  max-width: 280px;
+}
+
+/* ── Timeline ────────────────────────────────────────────────────── */
+.exh-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Single item ─────────────────────────────────────────────────── */
+.exh-item {
+  display: flex;
+  gap: 1rem;
+  animation: fadeInUp 0.35s ease-out both;
+}
+
+/* Dot + line column */
+.exh-dot-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 16px;
+}
+
+.exh-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 0.3rem;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 1), 0 0 0 5px rgba(0, 0, 0, 0.08);
+}
+
+.exh-line {
+  width: 2px;
+  flex: 1;
+  background: #e5e7eb;
+  margin: 6px 0;
+  min-height: 24px;
+}
+
+/* Content */
+.exh-content {
+  flex: 1;
+  padding-bottom: 1.25rem;
+}
+
+.exh-item-top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.4rem;
+}
+
+.exh-date {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.exh-time {
+  font-size: 0.78rem;
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.exh-score-chip {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: 50px;
+  border: 1px solid;
+}
+
+.exh-summary {
+  font-size: 0.88rem;
+  color: #6b7280;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Animations ──────────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .exh-header {
+    padding: 1.25rem;
+  }
+
+  .exh-body {
+    padding: 1.25rem;
+  }
+
+  .exh-item-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+  }
+}

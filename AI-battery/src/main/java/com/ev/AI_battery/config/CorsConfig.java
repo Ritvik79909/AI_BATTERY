@@ -25,21 +25,26 @@ public class CorsConfig {
                 "POST",
                 "PUT",
                 "DELETE",
-                "OPTIONS"
+                "OPTIONS",
+                "PATCH"
         ));
 
-        // Allow all headers (Authorization, Content-Type, etc.)
+        // Allow all headers
         config.setAllowedHeaders(List.of("*"));
 
         // Allow credentials for OAuth2 redirect flow
         config.setAllowCredentials(true);
 
-        // Cache preflight result (optional but good)
+        // Expose headers for OAuth2
+        config.setExposedHeaders(List.of(
+                "Authorization",
+                "Set-Cookie"
+        ));
+
+        // Cache preflight result
         config.setMaxAge(3600L);
 
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
-
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
     }

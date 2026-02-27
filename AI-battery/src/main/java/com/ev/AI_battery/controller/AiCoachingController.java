@@ -8,10 +8,7 @@ import com.ev.AI_battery.service.AiCoachingService;
 import com.ev.AI_battery.service.VehicleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/ai-coach")
@@ -24,10 +21,11 @@ public class AiCoachingController {
     @PostMapping("/query")
     public AiCoachingResponse askQuestion(
             @AuthenticationPrincipal CustomUserDetails user,
-            @RequestBody AiCoachingRequest request) {
+            @RequestBody AiCoachingRequest request,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lon) {
 
         Vehicle vehicle = vehicleService.getUserVehicleById(user.getUser(), request.getVehicleId());
-        return coachingService.askQuestion(vehicle, request.getQuestion());
+        return coachingService.askQuestion(vehicle, request.getQuestion(), lat, lon);
     }
 }
-

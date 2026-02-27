@@ -7,6 +7,8 @@ import {
 import Navbar from '../components/Navbar';
 import { batteryHealthService } from '../services/batteryHealthService';
 import { vehicleService } from '../services/vehicleService';
+import BatteryExplanation from '../components/BatteryExplanation';
+import ExplanationHistory from '../components/ExplanationHistory';
 import type {
   BatteryHealthScore,
   StateOfHealth,
@@ -295,10 +297,10 @@ const BatteryHealthPage: React.FC = () => {
                 {/* ━━━ 3. INTERPRETATION MESSAGE ━━━━━━━━━━━━━━━━━━━━━━━━━ */}
                 <div className="interpretation-card">
                   <div className={`interpretation-inner ${healthScore >= 80
-                      ? 'interpretation-excellent'
-                      : healthScore >= 60
-                        ? 'interpretation-moderate'
-                        : 'interpretation-poor'
+                    ? 'interpretation-excellent'
+                    : healthScore >= 60
+                      ? 'interpretation-moderate'
+                      : 'interpretation-poor'
                     }`}>
                     <div className="interpretation-icon">
                       {healthScore >= 80 ? '✅' : healthScore >= 60 ? '⚠️' : '🚨'}
@@ -321,6 +323,12 @@ const BatteryHealthPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* ━━━ 3b. AI EXPLANATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+                <BatteryExplanation
+                  vehicleId={selectedVehicleId}
+                  healthScore={healthScore}
+                />
 
                 {/* ━━━ 4. SoH TREND CHART ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
                 <div className="chart-card">
@@ -417,6 +425,9 @@ const BatteryHealthPage: React.FC = () => {
                     </p>
                   </div>
                 )}
+
+                {/* ━━━ 7. EXPLANATION HISTORY ━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+                <ExplanationHistory vehicleId={selectedVehicleId} />
 
               </div>
             )}

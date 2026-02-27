@@ -1,0 +1,240 @@
+/* StationCard.css */
+.sc-card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.35));
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 20px;
+  padding: 1.2rem 1.4rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+}
+
+.sc-card:hover {
+  transform: translateY(-5px) scale(1.015);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.09);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.sc-card.sc-highlighted {
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3), 0 18px 38px rgba(0, 0, 0, 0.09);
+}
+
+/* Recommended ribbon */
+.sc-recommended-ribbon {
+  position: absolute;
+  top: 14px;
+  right: -28px;
+  background: linear-gradient(90deg, #10b981, #059669);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 3px 36px;
+  transform: rotate(35deg);
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+}
+
+/* Header row */
+.sc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.sc-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.sc-distance-badge {
+  background: rgba(16, 185, 129, 0.12);
+  color: #065f46;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Meta row */
+.sc-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.sc-power {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.sc-power-icon {
+  color: #f59e0b;
+  font-size: 0.9rem;
+}
+
+.sc-operator {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.sc-price {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #059669;
+  background: rgba(16, 185, 129, 0.08);
+  border-radius: 6px;
+  padding: 1px 7px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+/* Connector chips */
+.sc-connectors {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
+}
+
+.sc-chip {
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-width: 1px;
+  border-style: solid;
+}
+
+/* Footer row */
+.sc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+/* Reliability score */
+.sc-reliability {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sc-score-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sc-score-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Availability */
+.sc-avail {
+  font-size: 0.78rem;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sc-avail-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+/* Recommended badge (inline) */
+.sc-rec-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1));
+  color: #065f46;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-top: 0.6rem;
+  width: fit-content;
+}
+
+/* View Details button */
+.sc-view-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+  padding: 0.35rem 0.85rem;
+  background: rgba(16, 185, 129, 0.08);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  width: 100%;
+  justify-content: center;
+}
+
+.sc-view-btn:hover {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+/* Recommended card left accent */
+.sc-recommended-card {
+  border-left: 3px solid #10b981;
+}
+
+/* Skeleton */
+.sc-skeleton {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.5), rgba(240, 244, 241, 0.5));
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  padding: 1.2rem 1.4rem;
+  overflow: hidden;
+}
+
+.sc-skel-line {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: sc-shimmer 1.4s infinite;
+  border-radius: 6px;
+  margin-bottom: 0.6rem;
+}
+
+@keyframes sc-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}

@@ -1,0 +1,347 @@
+/* ═══════════════════════════════════════════════════════════════════
+   BatteryExplanation – XAI panel styles
+   Matches the BatteryHealthPage glass-card theme.
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── Card wrapper ────────────────────────────────────────────────── */
+.bex-card {
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f3f4f6;
+  overflow: hidden;
+  transition: box-shadow 0.25s ease;
+  animation: fadeInUp 0.5s ease-out both;
+}
+
+.bex-card:hover {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.09);
+}
+
+/* ── Header ──────────────────────────────────────────────────────── */
+.bex-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.bex-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.bex-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.bex-card:hover .bex-icon-wrap {
+  transform: scale(1.08) rotate(-3deg);
+}
+
+.bex-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.bex-sub {
+  font-size: 0.82rem;
+  color: #9ca3af;
+  margin-top: 0.15rem;
+}
+
+/* ── "Why this happened?" button ─────────────────────────────────── */
+.bex-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+  white-space: nowrap;
+}
+
+.bex-toggle-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.45);
+}
+
+.bex-toggle-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.bex-toggle-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Panel ───────────────────────────────────────────────────────── */
+.bex-panel {
+  border-top: 1px solid #f3f4f6;
+  padding: 1.75rem 2rem;
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+/* ── Loading ─────────────────────────────────────────────────────── */
+.bex-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 0;
+  color: #9ca3af;
+  font-size: 0.95rem;
+}
+
+.bex-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(99, 102, 241, 0.15);
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ── Error ───────────────────────────────────────────────────────── */
+.bex-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: #fef2f2;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  color: #b91c1c;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.bex-error svg {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+/* ── NL Explanation text ─────────────────────────────────────────── */
+.bex-explanation-text {
+  background: linear-gradient(135deg, #f0f4ff, #faf5ff);
+  border: 1px solid rgba(99, 102, 241, 0.12);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.bex-explanation-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6366f1;
+  margin-bottom: 0.6rem;
+}
+
+.bex-explanation-text p {
+  font-size: 0.97rem;
+  color: #374151;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ── Divider ─────────────────────────────────────────────────────── */
+.bex-divider {
+  height: 1px;
+  background: #f3f4f6;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Factors ─────────────────────────────────────────────────────── */
+.bex-factors-section {
+  margin-bottom: 1rem;
+}
+
+.bex-factors-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+  margin-bottom: 0.875rem;
+}
+
+.bex-factors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* ── Factor row ──────────────────────────────────────────────────── */
+.bex-factor-row {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  background: #fafafa;
+  border: 1px solid #f3f4f6;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  animation: fadeInUp 0.35s ease-out both;
+  transition: background 0.2s ease;
+}
+
+.bex-factor-row:hover {
+  background: #f5f7ff;
+  border-color: rgba(99, 102, 241, 0.12);
+}
+
+.bex-factor-rank {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Info wrapper added to support description sub-line */
+.bex-factor-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.bex-factor-desc-inline {
+  font-size: 0.72rem;
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.bex-factor-name {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Impact badge */
+.bex-factor-badge {
+  padding: 0.3rem 0.75rem;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.bex-factor-badge--neg {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.18);
+}
+
+.bex-factor-badge--pos {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid rgba(22, 163, 74, 0.18);
+}
+
+/* Contribution points */
+.bex-factor-pts {
+  font-size: 0.9rem;
+  font-weight: 700;
+  min-width: 60px;
+  text-align: right;
+}
+
+.bex-factor-pts--neg {
+  color: #dc2626;
+}
+
+.bex-factor-pts--pos {
+  color: #16a34a;
+}
+
+/* ── No factors placeholder ──────────────────────────────────────── */
+.bex-no-factors {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.9rem;
+  padding: 1rem 0;
+}
+
+/* ── Footer timestamp ────────────────────────────────────────────── */
+.bex-footer-time {
+  font-size: 0.78rem;
+  color: #d1d5db;
+  text-align: right;
+  margin-top: 1rem;
+}
+
+/* ── Animations (re-use from health page) ────────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .bex-header {
+    padding: 1.25rem 1.25rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .bex-toggle-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .bex-panel {
+    padding: 1.25rem;
+  }
+
+  .bex-factor-row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .bex-factor-pts {
+    text-align: left;
+  }
+}

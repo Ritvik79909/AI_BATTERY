@@ -1,0 +1,820 @@
+/* ═══════════════════════════════════════════════════════════════════
+   BatteryExplanationDashboard.css
+   Standalone XAI dashboard – matches existing health page glass theme.
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── Wrapper ──────────────────────────────────────────────────────── */
+.bed-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   1. HEALTH CARD
+════════════════════════════════════════════════════════════════════ */
+.bed-health-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 35%, #4c1d95 70%, #6d28d9 100%);
+  color: white;
+  border-radius: 28px;
+  padding: 2.5rem 2rem;
+  box-shadow:
+    0 25px 50px -12px rgba(109, 40, 217, 0.45),
+    0 10px 20px -8px rgba(49, 46, 129, 0.35);
+  animation: bedFadeUp 0.6s ease-out both;
+}
+
+/* Decorative blobs */
+.bed-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(52px);
+  pointer-events: none;
+}
+
+.bed-blob-1 {
+  width: 300px;
+  height: 300px;
+  background: rgba(255, 255, 255, 0.06);
+  top: -120px;
+  right: -80px;
+}
+
+.bed-blob-2 {
+  width: 200px;
+  height: 200px;
+  background: rgba(0, 0, 0, 0.12);
+  bottom: -80px;
+  left: -50px;
+}
+
+.bed-health-inner {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  flex-wrap: wrap;
+}
+
+/* ── Circular Gauge ───────────────────────────────────────────────── */
+.bed-gauge-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.bed-circle-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.bed-circle-svg {
+  filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.08));
+}
+
+.bed-circle-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+}
+
+.bed-circle-score {
+  font-size: 3.25rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+}
+
+.bed-circle-label {
+  font-size: 1rem;
+  opacity: 0.6;
+  font-weight: 600;
+  color: white;
+}
+
+.bed-score-label-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.bed-score-label {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.bed-score-subtitle {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 500;
+  text-align: center;
+}
+
+/* ── Info column ──────────────────────────────────────────────────── */
+.bed-info-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 220px;
+}
+
+.bed-info-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.bed-info-sub {
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.65);
+  font-weight: 400;
+  margin-top: -0.5rem;
+}
+
+/* Metric row */
+.bed-metrics-row {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.bed-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.bed-metric-val {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: white;
+}
+
+.bed-metric-label {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+/* ── "Why this happened?" button ──────────────────────────────────── */
+.bed-why-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  align-self: flex-start;
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  color: white;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.bed-why-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.bed-why-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.bed-why-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.bed-btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: bedSpin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   2. EXPLANATION PANEL
+════════════════════════════════════════════════════════════════════ */
+.bed-panel {
+  background: white;
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+  border: 1px solid #f3f4f6;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  animation: bedFadeUp 0.35s ease-out both;
+}
+
+/* Loading */
+.bed-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2.5rem 0;
+  color: #9ca3af;
+  font-size: 0.95rem;
+}
+
+.bed-loading-spinner {
+  width: 42px;
+  height: 42px;
+  border: 3px solid rgba(109, 40, 217, 0.12);
+  border-top-color: #6d28d9;
+  border-radius: 50%;
+  animation: bedSpin 0.9s linear infinite;
+}
+
+/* Error */
+.bed-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: #fef2f2;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  color: #b91c1c;
+  font-size: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.bed-error svg {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.bed-retry-btn {
+  margin-left: auto;
+  padding: 0.35rem 1rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.18s, transform 0.18s;
+}
+
+.bed-retry-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.bed-no-factors {
+  color: #9ca3af;
+  font-size: 0.86rem;
+  padding: 0.5rem 0;
+  margin: 0;
+}
+
+/* NL Explanation */
+.bed-explanation-box {
+  background: linear-gradient(135deg, #f5f3ff, #eff6ff);
+  border: 1px solid rgba(109, 40, 217, 0.12);
+  border-radius: 18px;
+  padding: 1.5rem;
+}
+
+.bed-explanation-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6d28d9;
+  margin-bottom: 0.75rem;
+}
+
+.bed-explanation-text {
+  font-size: 0.97rem;
+  color: #374151;
+  line-height: 1.75;
+  margin: 0;
+}
+
+/* Section heading */
+.bed-section-heading {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1f2937;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.bed-section-sub {
+  font-size: 0.78rem;
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+/* ── Factor rows with impact bars ─────────────────────────────────── */
+.bed-factors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bed-factor-row {
+  background: #fafafa;
+  border: 1px solid #f3f4f6;
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  transition: background 0.2s, box-shadow 0.2s;
+  animation: bedFadeUp 0.3s ease-out both;
+}
+
+.bed-factor-row:hover {
+  background: #f5f3ff;
+  border-color: rgba(109, 40, 217, 0.1);
+  box-shadow: 0 4px 14px rgba(109, 40, 217, 0.07);
+}
+
+.bed-factor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bed-factor-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.bed-factor-pts {
+  font-size: 1rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* Impact bar */
+.bed-factor-bar-track {
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bed-factor-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 4px;
+}
+
+/* Meta row */
+.bed-factor-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.bed-factor-desc {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.bed-factor-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.25rem 0.7rem;
+  border-radius: 50px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   3. SHAP FORCE PLOT
+════════════════════════════════════════════════════════════════════ */
+.bed-shap-card {
+  background: #0f172a;
+  border-radius: 20px;
+  padding: 1.75rem;
+  color: white;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+
+.bed-shap-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  color: #e2e8f0;
+}
+
+.bed-shap-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 400;
+  margin-left: auto;
+}
+
+.bed-shap-legend {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.bed-shap-neg-legend {
+  color: #f87171;
+}
+
+.bed-shap-base {
+  color: #94a3b8;
+}
+
+.bed-shap-pos-legend {
+  color: #4ade80;
+}
+
+/* Grid of rows */
+.bed-shap-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.bed-shap-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 32px;
+}
+
+.bed-shap-factor-label {
+  width: 180px;
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+/* Left/right halves */
+.bed-shap-half {
+  flex: 1;
+  display: flex;
+  height: 100%;
+}
+
+.bed-shap-half--left {
+  justify-content: flex-end;
+}
+
+.bed-shap-half--right {
+  justify-content: flex-start;
+}
+
+.bed-shap-bar {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  border-radius: 4px;
+  min-width: 4px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.bed-shap-bar--neg {
+  border-radius: 4px 0 0 4px;
+  flex-direction: row-reverse;
+  padding-right: 6px;
+}
+
+.bed-shap-bar--pos {
+  border-radius: 0 4px 4px 0;
+  padding-left: 6px;
+}
+
+.bed-shap-bar-val {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: white;
+  white-space: nowrap;
+}
+
+/* Center axis */
+.bed-shap-center-line {
+  width: 2px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.18);
+  flex-shrink: 0;
+}
+
+.bed-shap-row-pts {
+  width: 50px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   4. HISTORY TIMELINE
+════════════════════════════════════════════════════════════════════ */
+.bed-hist-card {
+  background: white;
+  border-radius: 24px;
+  border: 1px solid #f3f4f6;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  animation: bedFadeUp 0.7s ease-out both;
+}
+
+.bed-hist-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.4rem 1.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+  gap: 1rem;
+}
+
+.bed-hist-toggle:hover {
+  background: #fafafa;
+}
+
+.bed-hist-toggle-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bed-hist-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+  color: #6d28d9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bed-hist-title-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.bed-hist-chev {
+  color: #9ca3af;
+}
+
+/* Body */
+.bed-hist-body {
+  border-top: 1px solid #f3f4f6;
+  padding: 1.5rem 1.75rem 2rem;
+  animation: bedFadeUp 0.3s ease-out both;
+}
+
+.bed-hist-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #9ca3af;
+  font-size: 0.88rem;
+  padding: 1rem 0;
+}
+
+.bed-hist-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(109, 40, 217, 0.15);
+  border-top-color: #6d28d9;
+  border-radius: 50%;
+  animation: bedSpin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+.bed-hist-empty {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.88rem;
+  padding: 2rem 0;
+}
+
+/* Timeline */
+.bed-hist-timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.bed-hist-item {
+  display: flex;
+  gap: 1rem;
+  animation: bedFadeUp 0.35s ease-out both;
+}
+
+.bed-hist-dot-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 14px;
+  flex-shrink: 0;
+}
+
+.bed-hist-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+  box-shadow: 0 0 0 3px white, 0 0 0 5px rgba(0, 0, 0, 0.07);
+}
+
+.bed-hist-line {
+  width: 2px;
+  flex: 1;
+  background: #e5e7eb;
+  margin: 5px 0;
+  min-height: 20px;
+}
+
+.bed-hist-content {
+  flex: 1;
+  padding-bottom: 1.25rem;
+}
+
+.bed-hist-item-top {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+
+.bed-hist-date {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.bed-hist-time {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.bed-hist-score {
+  font-size: 0.73rem;
+  font-weight: 700;
+  padding: 0.18rem 0.6rem;
+  border-radius: 50px;
+  border: 1px solid;
+}
+
+.bed-hist-summary {
+  font-size: 0.84rem;
+  color: #6b7280;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Animations
+════════════════════════════════════════════════════════════════════ */
+@keyframes bedFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bedSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Responsive
+════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .bed-health-inner {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.75rem;
+  }
+
+  .bed-info-col {
+    align-items: center;
+    text-align: center;
+  }
+
+  .bed-info-title {
+    font-size: 1.3rem;
+  }
+
+  .bed-metrics-row {
+    justify-content: center;
+  }
+
+  .bed-why-btn {
+    align-self: center;
+  }
+
+  .bed-shap-factor-label {
+    width: 110px;
+    font-size: 0.72rem;
+  }
+
+  .bed-panel {
+    padding: 1.25rem;
+  }
+
+  .bed-shap-card {
+    padding: 1.25rem;
+  }
+
+  .bed-shap-sub {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .bed-health-card {
+    padding: 2rem 1.25rem;
+  }
+
+  .bed-shap-factor-label {
+    width: 80px;
+    font-size: 0.65rem;
+  }
+
+  .bed-factor-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .bed-hist-toggle {
+    padding: 1.1rem 1.25rem;
+  }
+
+  .bed-hist-body {
+    padding: 1.25rem;
+  }
+}

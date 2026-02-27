@@ -27,37 +27,38 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String extractEmail(String token) {
+    public boolean validateToken(String token) {
         try {
-            return Jwts.parserBuilder()
-                    .setSigningKey(key)
-                    .setAllowedClockSkewSeconds(30)  // 30 seconds clock skew tolerance
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody()
-                    .getSubject();
-        } catch (ExpiredJwtException e) {
-            // Log expired token but don't rethrow - let filter handle gracefully
-            System.err.println("JWT expired: " + e.getMessage());
-            return null;
-        } catch (Exception e) {
-            System.err.println("Invalid JWT: " + e.getMessage());
-            return null;
+            // Quick length check before parsing
+            if (token == null || token.length() < 10) {
+                return false;
+            }
+
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
         }
     }
 
-    public boolean isTokenExpired(String token) {
+    public String extractEmail(String token) {
         try {
-            Date expiration = Jwts.parserBuilder()
+            // Quick check before parsing
+            if (token == null || token.length() < 10) {
+                return null;
+            }
+
+            Claims claims = Jwts.parserBuilder()
                     .setSigningKey(key)
                     .setAllowedClockSkewSeconds(30)
                     .build()
                     .parseClaimsJws(token)
-                    .getBody()
-                    .getExpiration();
-            return expiration.before(new Date());
-        } catch (Exception e) {
-            return true;
+                    .getBody();
+            return claims.getSubject();
+        } catch (ExpiredJwtException e) {
+            return null;
+        } catch (JwtException | IllegalArgumentException e) {
+            return null;
         }
     }
 }

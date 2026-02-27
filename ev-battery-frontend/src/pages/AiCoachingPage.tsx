@@ -3,8 +3,10 @@ import { FaPaperPlane, FaBrain, FaRobot, FaUser, FaCar } from 'react-icons/fa';
 import { MdAutoAwesome } from 'react-icons/md';
 import Navbar from '../components/Navbar';
 import { vehicleService } from '../services/vehicleService';
+import { batteryExplanationService } from '../services/batteryExplanationService';
 import api from '../services/api';
 import type { Vehicle } from '../types/vehicle';
+import type { BatteryExplanationData } from '../types/telemetry';
 import './AiCoachingPage.css';
 
 /* ─── Types ─────────────────────────────────────────────────────── */
@@ -53,6 +55,10 @@ const AiCoachingPage: React.FC = () => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Explanation context for AI coaching
+  const [latestExplanation, setLatestExplanation] = useState<BatteryExplanationData | null>(null);
+  const [explanationLoading, setExplanationLoading] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -71,6 +77,8 @@ const AiCoachingPage: React.FC = () => {
           setSelectedVehicleId(data[0].id);
           // Greet immediately once a vehicle is selected
           addWelcomeMessage(data[0]);
+          // Eagerly fetch latest explanation for context
+          fetchExplanationContext(data[0].id);
         }
       } catch {
         /* no-op – show empty selection state */
@@ -84,17 +92,34 @@ const AiCoachingPage: React.FC = () => {
     setMessages([
       {
         role: 'ai',
-        content: `Hi there! 👋 I'm your AI Battery Coach. I'm here to help you understand and optimise the battery health of your **${v.nickname} (${v.make} ${v.model})**.\n\nFeel free to ask me anything — from charging tips to degradation causes!`,
+        content: `Hi there! 👋 I'm your AI Battery Coach. I'm here to help you understand and optimise the battery health of your **${v.nickname} (${v.make} ${v.model})**.
+
+Feel free to ask me anything — from charging tips to degradation causes!`,
         timestamp: new Date(),
       },
     ]);
   };
 
-  /* Vehicle change → reset chat */
+  /* Fetch and cache the latest XAI explanation for this vehicle */
+  const fetchExplanationContext = async (vehicleId: string) => {
+    setExplanationLoading(true);
+    setLatestExplanation(null);
+    try {
+      const exp = await batteryExplanationService.getLatestExplanation(vehicleId);
+      setLatestExplanation(exp);
+    } catch {
+      /* silently ignore – context is optional */
+    } finally {
+      setExplanationLoading(false);
+    }
+  };
+
+  /* Vehicle change → reset chat + fetch new explanation context */
   const handleVehicleChange = (vid: string) => {
     setSelectedVehicleId(vid);
     const v = vehicles.find((x) => x.id === vid);
     if (v) addWelcomeMessage(v);
+    fetchExplanationContext(vid);
   };
 
   /* ── Send message ──────────────────────────────────────────────── */
@@ -112,10 +137,24 @@ const AiCoachingPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await api.post<AiCoachResponse>('/ai-coach/query', {
+      // Detect health-related questions and inject explanation context
+      const healthKeywords = ['why', 'health', 'decreas', 'degrad', 'drop', 'low', 'factor', 'cause', 'reason'];
+      const lowerQ = question.toLowerCase();
+      const isHealthQuestion = healthKeywords.some((kw) => lowerQ.includes(kw));
+
+      const payload: Record<string, unknown> = {
         vehicleId: selectedVehicleId,
         question,
-      });
+      };
+
+      if (isHealthQuestion && latestExplanation) {
+        payload.explanationContext = {
+          explanation: latestExplanation.explanation,
+          factors: latestExplanation.topFactors,
+        };
+      }
+
+      const res = await api.post<AiCoachResponse>('/ai-coach/query', payload);
 
       const aiMsg: ChatMessage = {
         role: 'ai',
@@ -215,10 +254,27 @@ const AiCoachingPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Explanation context badge */}
+          {(latestExplanation || explanationLoading) && (
+            <div className={`aic-context-badge ${explanationLoading ? 'aic-context-badge--loading' : ''}`}>
+              {explanationLoading ? (
+                <>
+                  <div className="aic-context-spinner" />
+                  <span>Loading AI context…</span>
+                </>
+              ) : (
+                <>
+                  <span>💡</span>
+                  <span>Using explanation context</span>
+                </>
+              )}
+            </div>
+          )}
+
           {/* Info footer */}
           <div className="aic-sidebar-footer">
             <span>🔒</span>
-            <span>Your data is private & secure</span>
+            <span>Your data is private &amp; secure</span>
           </div>
         </aside>
 

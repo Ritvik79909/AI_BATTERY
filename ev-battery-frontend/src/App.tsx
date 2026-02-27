@@ -11,6 +11,8 @@ import ChargingHistoryPage from './pages/ChargingHistoryPage'
 import ChargingHabitsPage from './pages/ChargingHabitsPage'
 import ChargingOptimizationPage from './pages/ChargingOptimizationPage'
 import AiCoachingPage from './pages/AiCoachingPage'
+import AlertsHistoryPage from './pages/AlertsHistoryPage'
+import StationListPage from './pages/StationListPage'
 import PrivateRoute from './components/PrivateRoute'
 import './App.css'
 
@@ -87,6 +89,22 @@ function App() {
         element={
           <PrivateRoute>
             <AiCoachingPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/alerts"
+        element={
+          <PrivateRoute>
+            <AlertsHistoryPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/stations"
+        element={
+          <PrivateRoute>
+            <StationListPage />
           </PrivateRoute>
         }
       />

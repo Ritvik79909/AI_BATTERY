@@ -1,0 +1,244 @@
+/* FilterPanel.css — Horizontal sticky bar layout */
+
+.fp-bar {
+  padding: 0.5rem 1.25rem;
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+}
+
+.fp-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.fp-row-secondary {
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.fp-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.fp-group-wide {
+  min-width: 200px;
+}
+
+.fp-group-toggle {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.fp-group-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+/* Connector pills */
+.fp-connector-pills {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.fp-pill-btn {
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  border: 1.5px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.8);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+.fp-pill-btn:hover {
+  border-color: #10b981;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.fp-pill-btn.active {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+/* Select */
+.fp-select {
+  padding: 0.32rem 0.65rem;
+  border-radius: 8px;
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+  min-width: 110px;
+}
+
+.fp-select:hover,
+.fp-select:focus {
+  border-color: #10b981;
+}
+
+/* Toggle switch */
+.fp-toggle {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.fp-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.fp-toggle-track {
+  display: block;
+  width: 36px;
+  height: 20px;
+  background: #d1d5db;
+  border-radius: 999px;
+  transition: background 0.2s;
+  position: relative;
+}
+
+.fp-toggle input:checked~.fp-toggle-track {
+  background: #10b981;
+}
+
+.fp-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.fp-toggle input:checked~.fp-toggle-track .fp-toggle-thumb {
+  transform: translateX(16px);
+}
+
+/* Search button */
+.fp-search-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.38rem 1rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.fp-search-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(16, 185, 129, 0.4);
+}
+
+/* More button */
+.fp-more-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.32rem 0.75rem;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6b7280;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.fp-more-btn:hover {
+  background: rgba(0, 0, 0, 0.09);
+  color: #374151;
+}
+
+/* Expandable area */
+.fp-expanded {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.fp-expanded-open {
+  max-height: 200px;
+  padding-top: 0.5rem;
+}
+
+/* Slider */
+.fp-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(to right, #10b981 var(--fill, 50%), #e5e7eb var(--fill, 50%));
+  outline: none;
+  cursor: pointer;
+}
+
+.fp-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  cursor: pointer;
+}
+
+.fp-slider-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.67rem;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .fp-bar {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .fp-row {
+    gap: 0.5rem;
+  }
+
+  .fp-select {
+    min-width: 90px;
+  }
+}

@@ -6,7 +6,6 @@ import com.ev.AI_battery.repository.AiCoachingHistoryRepository;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +17,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,22 +31,43 @@ public class AiCoachingService {
     private final ChargingHabitService habitService;
     private final ChargingOptimizationService optService;
     private final AiCoachingHistoryRepository historyRepo;
+    private final BatteryExplanationService explanationService;
+
+    // FIX: Add StationRecommendationService dependency
+    private final StationRecommendationService stationService;
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final Gson gson = new Gson();
 
     public AiCoachingResponse askQuestion(Vehicle vehicle, String question) {
+        return askQuestion(vehicle, question, null, null);
+    }
+
+    /**
+     * Enhanced askQuestion with location for station queries
+     */
+    public AiCoachingResponse askQuestion(Vehicle vehicle, String question,
+                                          Double lat, Double lon) {
         try {
-            // ✅ SAFE DATA FETCH with fallbacks
+            // Check if question is about stations
+            boolean isStationQuestion = question.toLowerCase().contains("station") ||
+                    question.toLowerCase().contains("where to charge") ||
+                    question.toLowerCase().contains("find charging") ||
+                    question.toLowerCase().contains("charging near") ||
+                    question.toLowerCase().contains("nearby charger");
+
+            if (isStationQuestion && lat != null && lon != null) {
+                return handleStationQuestion(vehicle, question, lat, lon);
+            }
+
+            // Regular battery question handling
             HealthScoreResponse health = safeGetHealthScore(vehicle);
             ChargingHabitSummary habits = safeGetHabits(vehicle);
             ChargingOptimizationRecommendation opt = safeGetOptimization(vehicle);
 
-            // Get detailed battery data
             Double soh = safeGetSoH(vehicle);
             Integer rulCycles = safeGetRUL(vehicle);
 
-            // Log the actual data being used
             log.info("Vehicle {} - Health Score: {}, SoH: {}, RUL: {}, Fast Charging: {}, Habit Score: {}",
                     vehicle.getId(),
                     health.getHealthScore(),
@@ -55,24 +76,17 @@ public class AiCoachingService {
                     habits.getFastChargingPercentage(),
                     habits.getHabitScore());
 
-            // Classify issue based on actual data
             CoachingContext context = classifyIssue(vehicle, health, habits, opt, soh, rulCycles);
-
-            // Build prompt with explicit instructions to use the data
             String prompt = buildEnhancedGeminiPrompt(context, question, vehicle);
 
-            // Call Gemini
             AiCoachingResponse response = callGeminiApi(prompt);
 
-            // Enhance response with actual data if Gemini fails
             if (response.getAnswer().contains("technical difficulties") ||
                     response.getRecommendations().get(0).equals("Follow recommendations")) {
                 response = buildDataDrivenFallback(context, question);
             }
 
-            // Store history
             storeCoachingHistory(vehicle, question, response);
-
             return response;
 
         } catch (Exception e) {
@@ -80,6 +94,112 @@ public class AiCoachingService {
             return buildDataDrivenFallback(null, question);
         }
     }
+
+    /**
+     * FIX: New method to handle station-related questions
+     */
+    private AiCoachingResponse handleStationQuestion(Vehicle vehicle, String question,
+                                                     Double lat, Double lon) {
+        try {
+            // Get station recommendations
+            StationRecommendationRequest request = new StationRecommendationRequest(
+                    lat, lon, 20.0, "ALL", false, 0.0, false,
+                    vehicle != null ? vehicle.getId() : null, "score", 5
+            );
+
+            List<StationRecommendationResponse> stations =
+                    stationService.getRecommendations(request, vehicle.getUser());
+
+            if (stations.isEmpty()) {
+                return new AiCoachingResponse(
+                        "I couldn't find any charging stations near your location. Try increasing the search radius or checking in a different area.",
+                        "Station Search",
+                        "INFO",
+                        Arrays.asList("Increase search radius", "Check in a different location", "Try different connector type"),
+                        LocalDateTime.now()
+                );
+            }
+
+            // Format stations for prompt
+            String stationContext = formatStationsForPrompt(stations);
+
+            String prompt = String.format(
+                    "You are EV Battery Coach helping a user find a charging station.\n\n" +
+                            "User Question: \"%s\"\n\n" +
+                            "Nearby Charging Stations:\n%s\n\n" +
+                            "Based on these stations, recommend the BEST 1-2 stations and explain why they're good choices. " +
+                            "Consider distance, charging speed, reliability, and if the user's battery health suggests slow charging.\n\n" +
+                            "Format your response with:\n" +
+                            "1. Brief answer with top recommendation\n" +
+                            "2. 2-3 reasons why it's recommended\n" +
+                            "3. Alternative option if available",
+                    question, stationContext
+            );
+
+            AiCoachingResponse response = callGeminiApi(prompt);
+
+            // Add station data to response
+            String enhancedAnswer = response.getAnswer() + "\n\n📍 " +
+                    stations.get(0).getStationName() + " is " +
+                    stations.get(0).getDistanceKm() + "km away.";
+
+            return new AiCoachingResponse(
+                    enhancedAnswer,
+                    "Station Recommendation",
+                    "INFO",
+                    Arrays.asList(
+                            "Check station availability in app",
+                            "Verify connector compatibility",
+                            "Plan your route accordingly"
+                    ),
+                    LocalDateTime.now()
+            );
+
+        } catch (Exception e) {
+            log.error("Error handling station question: {}", e.getMessage());
+            return new AiCoachingResponse(
+                    "I found some stations near you. Please check the Stations page for details and recommendations.",
+                    "Station Search",
+                    "INFO",
+                    Arrays.asList("Open Stations page", "Apply filters", "Select your vehicle"),
+                    LocalDateTime.now()
+            );
+        }
+    }
+
+    /**
+     * FIX: New method to format stations for Gemini prompt
+     */
+    private String formatStationsForPrompt(List<StationRecommendationResponse> stations) {
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < Math.min(stations.size(), 5); i++) {
+            StationRecommendationResponse s = stations.get(i);
+            sb.append(String.format(
+                    "Station %d: %s\n" +
+                            "  Distance: %.1f km\n" +
+                            "  Power: %.0f kW\n" +
+                            "  Connectors: %s\n" +
+                            "  Reliability: %.0f/100\n" +
+                            "  Price: $%.2f/kWh\n" +
+                            "  Score: %.1f/100\n" +
+                            "  Reason: %s\n\n",
+                    i + 1,
+                    s.getStationName(),
+                    s.getDistanceKm(),
+                    s.getMaxPowerKw(),
+                    String.join(", ", s.getConnectorTypes()),
+                    s.getReliabilityScore(),
+                    s.getPricePerKwh() != null ? s.getPricePerKwh() : 0.30,
+                    s.getRankScore(),
+                    s.getRecommendationReason()
+            ));
+        }
+
+        return sb.toString();
+    }
+
+    // ============ EXISTING METHODS (keep all your existing methods below) ============
 
     private Double safeGetSoH(Vehicle vehicle) {
         try {
@@ -134,12 +254,10 @@ public class AiCoachingService {
                                           Double soh, Integer rulCycles) {
         CoachingContext ctx = new CoachingContext();
 
-        // Safe data extraction
         double score = health.getHealthScore() != null ? health.getHealthScore() : 85.0;
         double fastPct = habits.getFastChargingPercentage() != null ? habits.getFastChargingPercentage() : 20.0;
         double habitScore = habits.getHabitScore() != null ? habits.getHabitScore() : 85.0;
 
-        // More detailed issue classification
         if (score < 60) {
             ctx.setIssueType("Critical Battery Degradation");
             ctx.setSeverity("HIGH");
@@ -163,14 +281,12 @@ public class AiCoachingService {
             ctx.setSeverity("LOW");
         }
 
-        // Populate all data
         ctx.setHealthScore(score);
         ctx.setSoh(soh);
         ctx.setRulCycles(rulCycles);
         ctx.setFastChargingPct(fastPct);
         ctx.setHabitScore(habitScore);
 
-        // Get specific recommendations based on the data
         List<String> recommendations = generateDataDrivenRecommendations(ctx);
         ctx.setRecommendations(recommendations);
 
@@ -230,8 +346,6 @@ public class AiCoachingService {
                         "2. Direct answer (2-3 sentences) that SPECIFICALLY references the vehicle data above\n" +
                         "3. 3 bullet-point action items based on the data\n" +
                         "4. End with an encouraging note\n\n" +
-                        "EXAMPLE GOOD RESPONSE:\n" +
-                        "\"Hey there! Looking at your data, I can see your battery health is at 91/100 which is good, but your fast charging usage at 50%% is higher than recommended. Here's what I suggest...\"\n\n" +
                         "Tone: Helpful, friendly, and data-driven. Always reference specific numbers from the vehicle data.",
                 vehicle.getId(),
                 safeDouble(ctx.getHealthScore(), 85.0),
@@ -275,8 +389,8 @@ public class AiCoachingService {
             requestBody.add("contents", contents);
 
             JsonObject generationConfig = new JsonObject();
-            generationConfig.addProperty("temperature", 0.4); // Lower temperature for more consistent responses
-            generationConfig.addProperty("maxOutputTokens", 300);
+            generationConfig.addProperty("temperature", 0.4);
+            generationConfig.addProperty("maxOutputTokens", 500); // Increased for station responses
             generationConfig.addProperty("topP", 0.8);
             requestBody.add("generationConfig", generationConfig);
 
@@ -304,7 +418,6 @@ public class AiCoachingService {
 
             String answer = responseParts.get(0).getAsJsonObject().get("text").getAsString();
 
-            // Parse the issue type from the response or use context
             String issueType = extractIssueType(answer);
             List<String> recommendations = extractRecommendations(answer);
 
@@ -329,13 +442,13 @@ public class AiCoachingService {
         if (answer.contains("degrad")) return "Battery Degradation";
         if (answer.contains("fast charging")) return "Fast Charging";
         if (answer.contains("habit")) return "Charging Habits";
+        if (answer.contains("station")) return "Station Recommendation";
         return "Battery Health";
     }
 
     private List<String> extractRecommendations(String answer) {
         if (answer == null) return Arrays.asList();
 
-        // Simple extraction - look for bullet points
         String[] lines = answer.split("\n");
         return Arrays.stream(lines)
                 .filter(line -> line.trim().startsWith("-") || line.trim().startsWith("•") || line.trim().startsWith("*"))
@@ -397,5 +510,52 @@ public class AiCoachingService {
                 Arrays.asList("Upload more telemetry data", "Try again in a few minutes"),
                 LocalDateTime.now()
         );
+    }
+
+    public String generateExplanationResponse(String context) {
+        try {
+            String prompt = String.format(
+                    "You are an EV battery expert. Based on the following battery health analysis, " +
+                            "provide a helpful, friendly explanation that's easy to understand:\n\n%s\n\n" +
+                            "Keep your response concise (2-3 sentences) and actionable.",
+                    context
+            );
+
+            AiCoachingResponse response = callGeminiApi(prompt);
+            return response != null ? response.getAnswer() :
+                    "Based on your battery data, the main factors affecting your battery health are " +
+                            "charging habits and temperature exposure.";
+
+        } catch (Exception e) {
+            log.error("Failed to generate explanation response", e);
+            return "I'm analyzing your battery data. Based on the information, regular charging " +
+                    "between 20-80% and avoiding extreme temperatures will help maintain battery health.";
+        }
+    }
+
+    public AiCoachingResponse askQuestionWithExplanation(Vehicle vehicle, String question) {
+        try {
+            boolean isWhyQuestion = question.toLowerCase().contains("why") ||
+                    question.toLowerCase().contains("reason") ||
+                    question.toLowerCase().contains("cause") ||
+                    question.toLowerCase().contains("because");
+
+            if (isWhyQuestion) {
+                BatteryExplanationResponse explanation = explanationService.getExplanation(vehicle);
+
+                String enhancedQuestion = question + "\n\nHere are the actual factors:\n";
+                for (ExplanationFactor f : explanation.getFactors()) {
+                    enhancedQuestion += String.format("- %s: %.1f points (%s)\n",
+                            f.getFactor(), f.getContribution(), f.getDescription());
+                }
+
+                return askQuestion(vehicle, enhancedQuestion, null, null);
+            } else {
+                return askQuestion(vehicle, question, null, null);
+            }
+        } catch (Exception e) {
+            log.warn("Enhanced coaching failed, using regular", e);
+            return askQuestion(vehicle, question, null, null);
+        }
     }
 }
