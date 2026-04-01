@@ -1,6 +1,0 @@
-cycle_count
-avg_temperature
-max_temperature
-fast_charging_pct
-avg_voltage
-charge_depth_avg

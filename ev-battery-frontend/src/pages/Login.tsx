@@ -23,8 +23,40 @@ const Login = () => {
       // Store token
       authService.saveToken(response.token);
 
-      // Redirect to dashboard
-      navigate('/dashboard');
+      try {
+        const { vehicleService } = await import('../services/vehicleService');
+        const { telemetryService } = await import('../services/telemetryService');
+        
+        const vehicles = await vehicleService.getVehicles();
+        if (!vehicles || vehicles.length === 0) {
+          navigate('/vehicle-setup');
+          return;
+        }
+
+        let hasTelemetry = false;
+        for (const v of vehicles) {
+          try {
+            const latest = await telemetryService.fetchLatestTelemetry(v.id);
+            if (latest && Object.keys(latest).length > 0) {
+              hasTelemetry = true;
+              break;
+            }
+          } catch (e) {
+            // Ignore 404 or errors
+          }
+        }
+
+        if (!hasTelemetry) {
+          navigate('/telemetry');
+          return;
+        }
+
+        // Redirect to dashboard
+        navigate('/dashboard');
+      } catch (err) {
+        // Fallback
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {

@@ -34,48 +34,62 @@ public class BatteryExplanationService {
     private final BatteryExplanationRepository explanationRepo;
     private final MlModelLoader modelLoader;
     private final ShapCalculator shapCalculator;
+    private final SHAPExplainerService shapExplainerService;
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final Gson gson = new Gson();
 
+    /**
+     * Generate explanation for vehicle battery health using SHAP + Gemini
+     * 
+     * Flow:
+     * 1. Get XGBoost predictions (SoH)
+     * 2. Calculate SHAP contributions
+     * 3. Use gemini_prompt_model.pkl to generate Gemini prompt
+     * 4. Send prompt to Gemini API
+     * 5. Return Gemini's explanation to frontend
+     */
     public BatteryExplanationResponse getExplanation(Vehicle vehicle) {
         try {
             log.info("========== GENERATING EXPLANATION FOR VEHICLE {} ==========", vehicle.getId());
 
-            // Get health data
+            // Step 1: Get health data and predictions
             HealthScoreResponse health = healthService.getScore(vehicle);
             SoHResponse soh = healthService.getSoH(vehicle);
             log.info("Health score: {}, SoH: {}", health.getHealthScore(), soh.getSoh());
 
-            // Get summaries
+            // Step 2: Get battery summary
             BatteryDailySummary latestSummary = getLatestSummary(vehicle);
             ChargingHabitSummary habits = habitService.analyzeHabits(vehicle);
             log.info("Habits - Fast charging: {}%, Frequency: {}/week",
                     habits.getFastChargingPercentage(), habits.getChargingFrequencyPerWeek());
 
-            // Prepare features and get SHAP values
+            // Step 3: Calculate SHAP values for the prediction
             double[] features = prepareFeatureVector(vehicle, latestSummary, habits);
             Map<String, Double> shapValues = shapCalculator.calculateShapValues(features);
-
-            // Convert to factors
             List<ExplanationFactor> factors = convertShapToFactors(shapValues, latestSummary, habits);
-            log.info("Created {} factors", factors.size());
+            log.info("Created {} SHAP factors", factors.size());
 
-            // Generate 3-line explanation (TRY GEMINI FIRST)
-            String explanation = generateThreeLineExplanation(health.getHealthScore(), factors, habits);
-            log.info("Generated explanation: {}", explanation);
+            // Step 4: Generate prompt using gemini_prompt_model.pkl (SHAP explainer)
+            String shapGeneratedPrompt = generateSHAPPrompt(soh.getSoh(), factors);
+            log.debug("Generated SHAP prompt for Gemini: {}", shapGeneratedPrompt.substring(0, Math.min(100, shapGeneratedPrompt.length())));
 
-            // Store in database
+            // Step 5: Send to Gemini API with SHAP-generated prompt
+            String explanation = sendToGeminiAPI(shapGeneratedPrompt);
+            explanation = normalizeExplanationOutput(explanation, soh.getSoh());
+            log.info("Generated explanation from Gemini: {}", explanation.substring(0, Math.min(100, explanation.length())));
+
+            // Step 6: Store in database
             storeExplanation(vehicle, health.getHealthScore(), soh.getSoh(), explanation, factors);
 
-            // Return response
+            // Step 7: Return response
             BatteryExplanationResponse response = new BatteryExplanationResponse(
                     health.getHealthScore(),
                     soh.getSoh(),
                     explanation,
                     factors,
                     LocalDateTime.now(),
-                    modelLoader.isModelLoaded() ? "ML_MODEL_WITH_SHAP" : "FALLBACK"
+                    "SHAP_GEMINI_PROMPT_MODEL"
             );
 
             log.info("========== EXPLANATION COMPLETE ==========");
@@ -88,93 +102,154 @@ public class BatteryExplanationService {
     }
 
     /**
-     * Generate 3-line explanation - TRIES GEMINI FIRST, then falls back
+     * Step 4: Generate SHAP-based prompt using gemini_prompt_model.pkl
+     * 
+     * This model takes SHAP contributions and outputs a prompt string
+     * to send to Gemini API
      */
-    private String generateThreeLineExplanation(Integer healthScore, List<ExplanationFactor> factors,
-                                                ChargingHabitSummary habits) {
-        // TRY GEMINI FIRST
-        String geminiExplanation = tryGeminiForExplanation(healthScore, factors, habits);
+    private String generateSHAPPrompt(Double predictedSoh, List<ExplanationFactor> factors) {
+        try {
+            // SoH baseline is always 100% for healthy batteries
+            double baseValue = 100.0;
 
-        if (geminiExplanation != null && !geminiExplanation.isEmpty()) {
-            log.info("Successfully generated Gemini explanation");
-            return geminiExplanation;
+            // Get top 5 contributors by absolute impact
+            List<SHAPExplainerService.FeatureContribution> topContributors = factors.stream()
+                    .sorted((a, b) -> Double.compare(
+                            Math.abs(b.getContribution()),
+                            Math.abs(a.getContribution())
+                    ))
+                    .limit(5)
+                    .map(factor -> new SHAPExplainerService.FeatureContribution(
+                            factor.getFactor(),
+                            Optional.ofNullable(factor.getFeatureValue()).orElse(0.0),
+                            factor.getContribution()
+                    ))
+                    .toList();
+
+            // Call gemini_prompt_model.pkl to generate prompt
+            String prompt = shapExplainerService.generatePrompt(
+                    predictedSoh,
+                    baseValue,
+                    topContributors
+            );
+
+            log.debug("SHAP model generated prompt (length: {})", prompt.length());
+            return prompt;
+
+        } catch (Exception e) {
+            log.error("Error generating SHAP prompt, using fallback", e);
+            return generateFallbackSHAPPrompt(predictedSoh, factors);
         }
-
-        log.warn("Gemini failed, using enhanced template explanation");
-
-        // FALLBACK 1: Enhanced template with 3 lines
-        return generateEnhancedTemplateExplanation(healthScore, factors, habits);
     }
 
     /**
-     * Try Gemini API with multiple models and better error handling
+     * Fallback prompt when SHAP model is unavailable
      */
-    private String tryGeminiForExplanation(Integer healthScore, List<ExplanationFactor> factors,
-                                           ChargingHabitSummary habits) {
+    private String generateFallbackSHAPPrompt(Double predictedSoh, List<ExplanationFactor> factors) {
+        StringBuilder prompt = new StringBuilder();
+        
+        double baselineSoH = 100.0;
+        double deviation = predictedSoh - baselineSoH;
+        String status = deviation > 5 ? "EXCELLENT" : 
+                       deviation > 0 ? "GOOD" : 
+                       deviation > -5 ? "MODERATE" : 
+                       deviation > -10 ? "FAIR" : "CRITICAL";
+
+        prompt.append("Generate a specific EV battery health explanation. Do not use role-play language.\n\n");
+        prompt.append("BATTERY HEALTH ANALYSIS REPORT\n");
+        prompt.append("Predicted State of Health (SoH): ").append(String.format("%.2f%%", predictedSoh)).append("\n");
+        prompt.append("Baseline Expected SoH: ").append(String.format("%.2f%%", baselineSoH)).append("\n");
+        prompt.append("Deviation from Baseline: ").append(String.format("%+.2f", deviation)).append(" percentage points\n");
+        prompt.append("Overall Status: ").append(status).append("\n\n");
+
+        // Top factors
+        List<ExplanationFactor> topFactors = factors.stream()
+                .sorted((a, b) -> Double.compare(Math.abs(b.getContribution()), Math.abs(a.getContribution())))
+                .limit(5)
+                .toList();
+
+        if (!topFactors.isEmpty()) {
+            prompt.append("Key Contributing Factors:\n");
+            for (int i = 0; i < topFactors.size(); i++) {
+                ExplanationFactor factor = topFactors.get(i);
+                String impact = factor.getContribution() < 0 ? "negative" : "positive";
+                prompt.append(String.format("\n%d. %s\n", i + 1, factor.getFactor()));
+                prompt.append(String.format("   Value: %.2f | SHAP Impact: %.4f (%s)\n",
+                        Optional.ofNullable(factor.getFeatureValue()).orElse(0.0),
+                        factor.getContribution(),
+                        impact));
+            }
+        }
+
+        prompt.append("\n\nProvide exactly these sections:\n");
+        prompt.append("1. SoH Interpretation: What ").append(String.format("%.2f%%", predictedSoh)).append("% SoH means for usable capacity and range.\n");
+        prompt.append("2. Why SoH Is At This Level: Top 3 causes using the factors above.\n");
+        prompt.append("3. Maintenance Plan: Immediate actions (7 days), short-term (30 days), long-term habits.\n");
+        prompt.append("4. Improvement Outlook: Expected 3-6 month trend if plan is followed.\n");
+        prompt.append("5. Weekly Monitoring: Key metrics to track.\n\n");
+        prompt.append("Use plain text only. No markdown symbols like # or *. End with a complete sentence.");
+
+        return prompt.toString();
+    }
+
+    /**
+     * Step 5: Send SHAP-generated prompt to Gemini API
+     */
+    private String sendToGeminiAPI(String prompt) {
         String[] modelsToTry = {"gemini-2.5-flash", "gemini-1.5-flash", "gemini-pro"};
-
-        // Get top factors
-        List<ExplanationFactor> topNegative = factors.stream()
-                .filter(f -> f.getContribution() < 0)
-                .sorted((a, b) -> Double.compare(b.getContribution(), a.getContribution()))
-                .limit(2)
-                .collect(Collectors.toList());
-
-        List<ExplanationFactor> topPositive = factors.stream()
-                .filter(f -> f.getContribution() > 0)
-                .sorted((a, b) -> Double.compare(b.getContribution(), a.getContribution()))
-                .limit(1)
-                .collect(Collectors.toList());
-
-        // Build prompt for 3-line response
-        String prompt = String.format(
-                "You are an EV battery expert. Generate EXACTLY 3 sentences about battery health.\n\n" +
-                        "Battery Health Score: %d/100\n" +
-                        "Charging Frequency: %.1f times/week\n" +
-                        "Fast Charging: %.1f%%\n\n" +
-                        "Negative Factors:\n%s\n" +
-                        "Positive Factors:\n%s\n\n" +
-                        "Format your response as EXACTLY 3 lines:\n" +
-                        "Line 1: State the health score and main issue\n" +
-                        "Line 2: Explain the key factors affecting it\n" +
-                        "Line 3: Give one actionable recommendation\n" +
-                        "Do not add any extra text or numbering.",
-                healthScore,
-                habits.getChargingFrequencyPerWeek(),
-                habits.getFastChargingPercentage(),
-                formatFactorsForPrompt(topNegative, true),
-                formatFactorsForPrompt(topPositive, false)
-        );
 
         for (String model : modelsToTry) {
             try {
                 log.debug("Trying Gemini model: {}", model);
                 String response = callGeminiApi(model, prompt);
                 if (response != null && !response.isEmpty()) {
-                    // Validate it has 3 lines
-                    String[] lines = response.split("\n");
-                    if (lines.length >= 3) {
-                        return response;
-                    }
+                    log.info("Successfully got explanation from Gemini model: {}", model);
+                    return response;
                 }
             } catch (Exception e) {
                 log.debug("Model {} failed: {}", model, e.getMessage());
             }
         }
 
-        return null;
-    }
-
-    private String formatFactorsForPrompt(List<ExplanationFactor> factors, boolean isNegative) {
-        if (factors.isEmpty()) return "None";
-        return factors.stream()
-                .map(f -> String.format("- %s: %.1f points (%s)",
-                        f.getFactor(), Math.abs(f.getContribution()), f.getDescription()))
-                .collect(Collectors.joining("\n"));
+        log.warn("All Gemini models failed, using fallback");
+        return "Your battery is experiencing normal degradation. Optimize charging habits and maintain moderate temperatures to extend lifespan.";
     }
 
     /**
-     * Call Gemini API with proper error handling
+     * Keep frontend output clean plain text and avoid abruptly cut endings.
+     */
+    private String normalizeExplanationOutput(String explanation, Double soh) {
+        if (explanation == null || explanation.isBlank()) {
+            return String.format("Battery SoH is %.2f%%. Continue with balanced charging, thermal control, and weekly monitoring to maintain battery health.",
+                    Optional.ofNullable(soh).orElse(0.0));
+        }
+
+        String cleaned = explanation
+                .replace("#", "")
+                .replace("*", "")
+                .replace("•", "-")
+                .replaceAll("[ \t]+", " ")
+                .replaceAll("\n{3,}", "\n\n")
+                .trim();
+
+        if (cleaned.endsWith(".") || cleaned.endsWith("!") || cleaned.endsWith("?")) {
+            return cleaned;
+        }
+
+        int lastSentenceEnd = Math.max(cleaned.lastIndexOf('.'), Math.max(cleaned.lastIndexOf('!'), cleaned.lastIndexOf('?')));
+        if (lastSentenceEnd > 0) {
+            String completePart = cleaned.substring(0, lastSentenceEnd + 1).trim();
+            if (!completePart.isBlank()) {
+                return completePart;
+            }
+        }
+
+        return cleaned + String.format(" Final note: battery SoH is %.2f%%, so following the maintenance plan should help slow further degradation.",
+                Optional.ofNullable(soh).orElse(0.0));
+    }
+
+    /**
+     * Call Gemini API
      */
     private String callGeminiApi(String model, String prompt) {
         try {
@@ -197,198 +272,108 @@ public class BatteryExplanationService {
             requestBody.add("contents", contents);
 
             JsonObject generationConfig = new JsonObject();
-            generationConfig.addProperty("temperature", 0.4);
-            generationConfig.addProperty("maxOutputTokens", 200);
-            generationConfig.addProperty("topP", 0.8);
+            generationConfig.addProperty("temperature", 0.7);
+            generationConfig.addProperty("maxOutputTokens", 2048);
+            generationConfig.addProperty("topP", 0.95);
             requestBody.add("generationConfig", generationConfig);
 
             HttpEntity<String> entity = new HttpEntity<>(gson.toJson(requestBody), headers);
-
             ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
 
             if (response.getStatusCode() == HttpStatus.OK) {
                 JsonObject jsonResponse = gson.fromJson(response.getBody(), JsonObject.class);
                 JsonArray candidates = jsonResponse.getAsJsonArray("candidates");
 
-                if (candidates != null && candidates.size() > 0) {
+                if (candidates != null && !candidates.isEmpty()) {
                     JsonObject candidate = candidates.get(0).getAsJsonObject();
                     JsonObject content = candidate.getAsJsonObject("content");
                     JsonArray parts = content.getAsJsonArray("parts");
-                    String text = parts.get(0).getAsJsonObject().get("text").getAsString();
-                    return text.trim();
+                    return parts.get(0).getAsJsonObject().get("text").getAsString().trim();
                 }
             }
         } catch (RestClientException e) {
             log.debug("Gemini API error: {}", e.getMessage());
         } catch (Exception e) {
-            log.debug("Unexpected error: {}", e.getMessage());
+            log.debug("Error calling Gemini: {}", e.getMessage());
         }
         return null;
     }
 
     /**
-     * Enhanced template explanation - ALWAYS returns 3 lines
+     * Convert SHAP values to explanation factors
      */
-    private String generateEnhancedTemplateExplanation(Integer healthScore, List<ExplanationFactor> factors,
-                                                       ChargingHabitSummary habits) {
-        StringBuilder explanation = new StringBuilder();
-
-        // Find worst negative factor
-        Optional<ExplanationFactor> worstNegative = factors.stream()
-                .filter(f -> f.getContribution() < 0)
-                .min(Comparator.comparingDouble(ExplanationFactor::getContribution));
-
-        // Find best positive factor
-        Optional<ExplanationFactor> bestPositive = factors.stream()
-                .filter(f -> f.getContribution() > 0)
-                .max(Comparator.comparingDouble(ExplanationFactor::getContribution));
-
-        // LINE 1: Health score and main issue
-        if (worstNegative.isPresent()) {
-            explanation.append("Your battery health is ").append(healthScore)
-                    .append("/100, mainly affected by ").append(worstNegative.get().getFactor().toLowerCase())
-                    .append(" (").append(worstNegative.get().getDescription()).append(").\n");
-        } else {
-            explanation.append("Your battery health is ").append(healthScore)
-                    .append("/100, which is in excellent condition.\n");
-        }
-
-        // LINE 2: Secondary factors and charging frequency
-        List<ExplanationFactor> otherFactors = factors.stream()
-                .filter(f -> f.getContribution() < 0)
-                .sorted((a, b) -> Double.compare(b.getContribution(), a.getContribution()))
-                .skip(1)
-                .limit(1)
-                .collect(Collectors.toList());
-
-        if (!otherFactors.isEmpty()) {
-            explanation.append("Additional stress comes from ").append(otherFactors.get(0).getFactor().toLowerCase())
-                    .append(", with ").append(String.format("%.1f", habits.getChargingFrequencyPerWeek()))
-                    .append(" charging sessions per week.\n");
-        } else if (bestPositive.isPresent()) {
-            explanation.append("Your ").append(bestPositive.get().getFactor().toLowerCase())
-                    .append(" is helping preserve battery life (+").append(String.format("%.1f", bestPositive.get().getContribution()))
-                    .append(" points).\n");
-        } else {
-            explanation.append("You charge ").append(String.format("%.1f", habits.getChargingFrequencyPerWeek()))
-                    .append(" times per week.\n");
-        }
-
-        // LINE 3: Recommendation
-        if (healthScore < 80) {
-            explanation.append("Recommendation: Reduce fast charging and maintain charge between 20-80% to extend battery life.");
-        } else if (habits.getFastChargingPercentage() > 30) {
-            explanation.append("Recommendation: Limit fast charging to preserve long-term battery health.");
-        } else if (worstNegative.isPresent() && worstNegative.get().getFactor().contains("depth")) {
-            explanation.append("Recommendation: Avoid deep discharges below 20% to reduce stress on your battery.");
-        } else {
-            explanation.append("Recommendation: Continue your current charging habits to maintain good battery health.");
-        }
-
-        return explanation.toString();
-    }
-
-    // ==================== HELPER METHODS (Keep all your existing ones) ====================
-
     private List<ExplanationFactor> convertShapToFactors(Map<String, Double> shapValues,
                                                          BatteryDailySummary summary,
                                                          ChargingHabitSummary habits) {
         List<ExplanationFactor> factors = new ArrayList<>();
 
-        if (shapValues == null || shapValues.isEmpty()) {
-            return createDefaultFactors(summary, habits);
-        }
-
         for (Map.Entry<String, Double> entry : shapValues.entrySet()) {
-            String featureKey = entry.getKey();
-            double contribution = entry.getValue();
+            double featureValue = getFeatureValue(entry.getKey(), summary, habits);
+            String featureName = getFeatureDisplayName(entry.getKey());
+            Double contribution = entry.getValue();
+            String description = getFeatureDescription(entry.getKey(), summary, habits);
+            String impact = contribution < 0 ? "Negative" : "Positive";
 
-            String displayName = getFeatureDisplayName(featureKey);
-            String impact = contribution > 0 ? "Positive" : "Negative";
-            String description = getFeatureDescription(featureKey, summary, habits);
-
-            factors.add(new ExplanationFactor(
-                    displayName,
-                    Math.round(contribution * 10) / 10.0,
-                    impact,
-                    description
-            ));
+            factors.add(new ExplanationFactor(featureName, featureValue, contribution, impact, description));
         }
-
-        factors.sort((a, b) -> Double.compare(Math.abs(b.getContribution()), Math.abs(a.getContribution())));
-        return factors;
-    }
-
-    private List<ExplanationFactor> createDefaultFactors(BatteryDailySummary summary,
-                                                         ChargingHabitSummary habits) {
-        List<ExplanationFactor> factors = new ArrayList<>();
-
-        int cycles = summary.getDailyCycleIncrement() != null ? summary.getDailyCycleIncrement() * 30 : 120;
-        double temp = summary.getMaxTemperature() != null ? summary.getMaxTemperature() : 26.5;
-        double fastPct = habits != null && habits.getFastChargingPercentage() != null ?
-                habits.getFastChargingPercentage() : 25.0;
-        double depth = habits != null && habits.getAverageChargeDepth() != null ?
-                habits.getAverageChargeDepth() : 65.0;
-
-        factors.add(new ExplanationFactor("Charging cycles", -3.0, "Negative", cycles + " cycles"));
-        factors.add(new ExplanationFactor("Temperature", -1.8, "Negative", String.format("%.1f°C", temp)));
-        factors.add(new ExplanationFactor("Fast charging", -2.2, "Negative", String.format("%.0f%% fast charging", fastPct)));
-        factors.add(new ExplanationFactor("Charge depth", -1.2, "Negative", String.format("%.0f%% depth", depth)));
 
         return factors;
     }
 
     private String getFeatureDisplayName(String featureKey) {
-        Map<String, String> displayNames = new HashMap<>();
-        displayNames.put("cycle_count", "Charging cycles");
-        displayNames.put("avg_temperature", "Average temperature");
-        displayNames.put("max_temperature", "Peak temperature");
-        displayNames.put("fast_charging_pct", "Fast charging usage");
-        displayNames.put("avg_voltage", "Voltage stability");
-        displayNames.put("charge_depth_avg", "Charge depth");
-        return displayNames.getOrDefault(featureKey, featureKey);
+        return featureKey.replace("_", " ").toUpperCase().charAt(0) + featureKey.replace("_", " ").substring(1).toLowerCase();
     }
 
-    private String getFeatureDescription(String featureKey, BatteryDailySummary summary,
-                                         ChargingHabitSummary habits) {
+    private String getFeatureDescription(String featureKey, BatteryDailySummary summary, ChargingHabitSummary habits) {
         switch (featureKey) {
             case "cycle_count":
-                int cycles = summary.getDailyCycleIncrement() != null ? summary.getDailyCycleIncrement() * 30 : 120;
-                return cycles + " cycles";
+                return "Charging cycles accumulated";
             case "avg_temperature":
+                return "Average operating temperature";
             case "max_temperature":
-                double temp = summary.getMaxTemperature() != null ? summary.getMaxTemperature() : 26.5;
-                return String.format("%.1f°C", temp);
+                return "Peak operating temperature";
             case "fast_charging_pct":
-                double fastPct = habits != null && habits.getFastChargingPercentage() != null ?
-                        habits.getFastChargingPercentage() : 25.0;
-                return String.format("%.0f%% fast charging", fastPct);
+                return "Frequency of fast charging";
             case "avg_voltage":
-                double voltage = summary.getAvgVoltage() != null ? summary.getAvgVoltage() : 3.7;
-                return String.format("%.2fV", voltage);
+                return "Average discharge voltage";
             case "charge_depth_avg":
-                double depth = habits != null && habits.getAverageChargeDepth() != null ?
-                        habits.getAverageChargeDepth() : 65.0;
-                return String.format("%.0f%% depth", depth);
+                return "Depth of discharge cycles";
             default:
-                return "Normal";
+                return "Battery performance factor";
         }
     }
 
-    private double[] prepareFeatureVector(Vehicle vehicle, BatteryDailySummary summary,
-                                          ChargingHabitSummary habits) {
-        double[] features = new double[6];
-        features[0] = summary.getDailyCycleIncrement() != null ? summary.getDailyCycleIncrement() * 30 : 120.0;
-        features[1] = summary.getMaxTemperature() != null ? summary.getMaxTemperature() : 26.5;
-        features[2] = features[1] + 3.0;
-        features[3] = habits != null && habits.getFastChargingPercentage() != null ? habits.getFastChargingPercentage() : 25.0;
-        features[4] = summary.getAvgVoltage() != null ? summary.getAvgVoltage() : 3.7;
-        features[5] = habits != null && habits.getAverageChargeDepth() != null ? habits.getAverageChargeDepth() : 65.0;
-        return features;
+    private double getFeatureValue(String featureKey, BatteryDailySummary summary, ChargingHabitSummary habits) {
+        switch (featureKey) {
+            case "cycle_count":
+                return summary.getDailyCycleIncrement() != null ? summary.getDailyCycleIncrement() : 100.0;
+            case "avg_temperature":
+                return summary.getMaxTemperature() != null ? summary.getMaxTemperature() : 25.0;
+            case "max_temperature":
+                return summary.getMaxTemperature() != null ? summary.getMaxTemperature() + 5.0 : 30.0;
+            case "fast_charging_pct":
+                return habits != null && habits.getFastChargingPercentage() != null ? habits.getFastChargingPercentage() : 20.0;
+            case "avg_voltage":
+                return summary.getAvgVoltage() != null ? summary.getAvgVoltage() : 3.7;
+            case "charge_depth_avg":
+                return habits != null && habits.getAverageChargeDepth() != null ? habits.getAverageChargeDepth() : 60.0;
+            default:
+                return 0.0;
+        }
     }
 
-    private void storeExplanation(Vehicle vehicle, Integer healthScore, Double soh,
-                                  String explanation, List<ExplanationFactor> factors) {
+    private double[] prepareFeatureVector(Vehicle vehicle, BatteryDailySummary summary, ChargingHabitSummary habits) {
+        double cycleCount = summary.getDailyCycleIncrement() != null ? summary.getDailyCycleIncrement() : 100;
+        double avgTemp = summary.getMaxTemperature() != null ? summary.getMaxTemperature() : 25.0;
+        double maxTemp = avgTemp + 5;
+        double fastChargingPct = habits != null && habits.getFastChargingPercentage() != null ? habits.getFastChargingPercentage() : 20.0;
+        double avgVoltage = summary.getAvgVoltage() != null ? summary.getAvgVoltage() : 3.7;
+        double chargeDepth = habits != null && habits.getAverageChargeDepth() != null ? habits.getAverageChargeDepth() : 60.0;
+
+        return new double[]{cycleCount, avgTemp, maxTemp, fastChargingPct, avgVoltage, chargeDepth};
+    }
+
+    private void storeExplanation(Vehicle vehicle, Integer healthScore, Double soh, String explanation, List<ExplanationFactor> factors) {
         try {
             BatteryExplanation entity = new BatteryExplanation();
             entity.setVehicle(vehicle);
@@ -408,9 +393,9 @@ public class BatteryExplanationService {
         List<BatteryDailySummary> summaries = dailyRepo.findByVehicleOrderByDateDesc(vehicle);
         if (summaries.isEmpty()) {
             BatteryDailySummary mock = new BatteryDailySummary();
-            mock.setMaxTemperature(26.5);
-            mock.setDailyCycleIncrement(4);
-            mock.setAvgVoltage(3.72);
+            mock.setMaxTemperature(25.0);
+            mock.setDailyCycleIncrement(1);
+            mock.setAvgVoltage(3.7);
             mock.setAvgSoc(75.0);
             return mock;
         }
@@ -418,19 +403,14 @@ public class BatteryExplanationService {
     }
 
     private BatteryExplanationResponse fallbackExplanation(Vehicle vehicle) {
-        List<ExplanationFactor> factors = Arrays.asList(
-                new ExplanationFactor("Charging cycles", -2.8, "Negative", "120 cycles"),
-                new ExplanationFactor("Fast charging", -2.2, "Negative", "25% fast charging"),
-                new ExplanationFactor("Temperature", -1.5, "Negative", "26.5°C")
-        );
-
         return new BatteryExplanationResponse(
-                85,
-                92.5,
-                "Your battery health is 85/100, affected by charging cycles and fast charging. You charge 4.5 times per week. Consider reducing fast charging to extend battery life.",
-                factors,
+                80,
+                85.0,
+                "Battery health is within normal parameters. Regular monitoring is recommended.",
+                new ArrayList<>(),
                 LocalDateTime.now(),
                 "FALLBACK"
         );
     }
 }
+

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaBolt, FaChargingStation, FaStar } from 'react-icons/fa';
+import { FaBolt, FaChargingStation } from 'react-icons/fa';
 import { MdSpeed, MdBattery60 } from 'react-icons/md';
 import Navbar from '../components/Navbar';
 import { vehicleService } from '../services/vehicleService';
@@ -196,7 +196,7 @@ const ChargingHabitsPage: React.FC = () => {
                         <FaChargingStation className="hero-title-icon" />
                         Charging Habits
                       </h1>
-                      <p className="hero-subtitle">AI-powered analysis of your charging patterns</p>
+                      {/* <p className="hero-subtitle">AI-powered analysis of your charging patterns</p> */}
 
                       <div className="hero-stats">
                         <div className="hero-stat">
@@ -263,27 +263,7 @@ const ChargingHabitsPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* ━━━ 4. AI INSIGHTS LIST ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-                <div className="insights-card">
-                  <h3 className="insights-title">
-                    <FaStar className="text-yellow-400" />
-                    AI Insights
-                  </h3>
-                  {habitData.insights?.length > 0 ? (
-                    <ul className="insights-list">
-                      {habitData.insights.map((insight, i) => (
-                        <li key={i} className="insight-item">
-                          <div className="insight-dot">{i + 1}</div>
-                          <span>{insight}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-gray-400 text-center py-6">
-                      No insights available yet.
-                    </p>
-                  )}
-                </div>
+
 
               </div>
             )}

@@ -6,6 +6,7 @@ import com.ev.AI_battery.model.Vehicle;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface BatteryTelemetryRepository
@@ -16,6 +17,13 @@ public interface BatteryTelemetryRepository
 
     BatteryTelemetry
     findTop1ByVehicleOrderByTimestampDesc(Vehicle vehicle);
+
+    List<BatteryTelemetry>
+    findByVehicleAndTimestampBetweenOrderByTimestampAsc(
+            Vehicle vehicle,
+            LocalDateTime start,
+            LocalDateTime end
+    );
 
     @Query("""
     SELECT new com.ev.AI_battery.dto.TelemetryDailySummary(

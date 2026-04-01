@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --health-bg: #fdfdf5;
   --health-card-bg: rgba(255, 255, 255, 0.4);
   --health-glass-border: rgba(255, 255, 255, 0.6);
@@ -21,8 +21,6 @@
 }
 
 .health-content {
-  max-width: 1400px;
-  margin: 0 auto;
   padding: 2rem 0;
 }
 
@@ -119,80 +117,49 @@
 }
 
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Day-16: HEALTH SCORE HERO
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .health-score-hero {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 40%, #a855f7 70%, #ec4899 100%);
-  color: white;
-  padding: 3.5rem 2.5rem;
-  border-radius: 32px;
-  box-shadow:
-    0 25px 50px -12px rgba(139, 92, 246, 0.4),
-    0 10px 20px -8px rgba(99, 102, 241, 0.3);
-  min-height: 420px;
+  background: #ffffff;
+  color: #1f2937;
+  padding: 2rem 2.5rem;
+  border-radius: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+  border: 1px solid #e5e7eb;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   animation: fadeInUp 0.7s ease-out;
 }
 
-/* Decorative blobs */
-.hero-blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(48px);
-  pointer-events: none;
-}
-
-.hero-blob-1 {
-  width: 350px;
-  height: 350px;
-  background: rgba(255, 255, 255, 0.08);
-  top: -100px;
-  right: -80px;
-}
-
-.hero-blob-2 {
-  width: 250px;
-  height: 250px;
-  background: rgba(0, 0, 0, 0.1);
-  bottom: -80px;
-  left: -60px;
-}
-
+/* Decorative blobs – hidden on white bg */
+.hero-blob,
 .hero-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.08);
-  pointer-events: none;
+  display: none;
 }
 
 .hero-content {
   position: relative;
   z-index: 10;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 2rem;
+  gap: 2.5rem;
   width: 100%;
-  max-width: 700px;
 }
 
 /* Gauge */
 .hero-gauge-wrap {
   position: relative;
-  width: 220px;
-  height: 220px;
+  width: 160px;
+  height: 160px;
   flex-shrink: 0;
 }
 
 .circular-gauge-svg {
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.3));
+  filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.07));
 }
 
 .hero-gauge-center {
@@ -202,69 +169,62 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.1rem;
 }
 
 .hero-score-number {
-  font-size: 4rem;
+  font-size: 3rem;
   font-weight: 900;
   line-height: 1;
   letter-spacing: -0.03em;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  color: #111827;
 }
 
 .hero-score-pct {
-  font-size: 1.1rem;
-  opacity: 0.75;
-  font-weight: 600;
+  display: none;
 }
 
 /* Text section */
 .hero-text {
-  text-align: center;
+  text-align: left;
 }
 
+/* "Battery Health Score" title */
+.hero-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 0.4rem;
+  letter-spacing: -0.02em;
+}
+
+/* Colored health label: Good / Moderate / Poor */
 .hero-label {
-  font-size: 3rem;
-  font-weight: 900;
-  letter-spacing: -0.04em;
-  margin: 0 0 0.5rem;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
 }
 
 .hero-sub {
-  font-size: 1.1rem;
-  opacity: 0.85;
-  margin: 0 0 1.25rem;
-  font-weight: 400;
+  display: none;
 }
 
 .hero-source-badge {
-  display: inline-block;
-  background: rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 0.45rem 1.2rem;
-  border-radius: 50px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  display: none;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Day-16: SCORE BREAKDOWN CARDS
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .score-cards-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1.25rem;
+  gap: 2.00rem;
+  padding: 1rem;
 }
 
 .score-card {
   background: white;
-  padding: 1.5rem 1.25rem;
+  padding: 2.5rem 1.25rem;
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  border-top: 4px solid transparent;
+  border-top: 2px solid transparent;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   text-align: center;
 }
@@ -318,9 +278,6 @@
   font-weight: 500;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Day-16: INTERPRETATION CARD
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .interpretation-card {
   background: white;
   border-radius: 24px;
@@ -372,11 +329,8 @@
   margin: 0;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Day-16: UNIFIED CHART CARDS
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .chart-card {
-  background: white;
+  background: transparent;
   padding: 1.75rem 2rem;
   border-radius: 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
@@ -401,10 +355,10 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #1f2937;
-  margin: 0 0 1.25rem;
+  margin: 0 0 1rem;
 }
 
 .chart-empty {
@@ -412,6 +366,20 @@
   padding: 3rem 1rem;
   color: #9ca3af;
   font-size: 0.95rem;
+}
+
+/* 2-column charts grid */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  padding: 1rem;
+}
+
+@media (max-width: 768px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ML Badge (kept for compatibility) */

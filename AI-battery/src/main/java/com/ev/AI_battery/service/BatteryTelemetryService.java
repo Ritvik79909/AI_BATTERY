@@ -17,6 +17,7 @@ public class BatteryTelemetryService {
     private final BatteryTelemetryRepository repository;
     private final TelemetryValidator validator;
     private final BatteryDataProcessingService processingService;
+    private final BatteryDailySummaryAggregationService dailySummaryAggregationService;
 
     public BatteryTelemetry ingest(Vehicle vehicle, BatteryTelemetry telemetry) {
         // ✅ CRITICAL: Ensure timestamp is always set (frontend might omit)
@@ -35,6 +36,11 @@ public class BatteryTelemetryService {
 
         // 2️⃣ TRIGGER DAY-10 PROCESSING (inherits raw timestamp)
         processingService.process(saved, vehicle);
+
+        // 3️⃣ Recompute daily averages for single/manual ingestion.
+        if (saved.getSource() != TelemetrySource.DATASET && saved.getSource() != TelemetrySource.DOCUMENT) {
+            dailySummaryAggregationService.refreshSummaryForTelemetryRecord(vehicle, saved);
+        }
 
         return saved;
     }

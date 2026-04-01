@@ -9,6 +9,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ExplanationFactor {
     private String factor;
+    private Double featureValue;
     private Double contribution;
     private String impact;
     private String description;

@@ -1,30 +1,23 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { FaFileUpload, FaHistory, FaThermometerHalf, FaBatteryThreeQuarters, FaCheckCircle, FaExclamationCircle, FaHeart, FaClock } from 'react-icons/fa';
+import { useState, useEffect, useRef } from 'react';
+import { FaFileUpload, FaHistory, FaThermometerHalf, FaBatteryThreeQuarters, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
 import { MdElectricCar } from 'react-icons/md';
 import Navbar from '../components/Navbar';
 import { vehicleService } from '../services/vehicleService';
 import { telemetryService } from '../services/telemetryService';
-import { processedBatteryService } from '../services/processedBatteryService';
 import type { Vehicle } from '../types/vehicle';
-import type { TelemetryRecord, TelemetryData, ProcessedBatteryData, DailyBatterySummary } from '../types/telemetry';
+import type { TelemetryRecord, TelemetryData } from '../types/telemetry';
 import './BatteryTelemetryPage.css';
 
 const BatteryTelemetryPage = () => {
   // State
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>('');
-  const [mainTab, setMainTab] = useState<'telemetry' | 'health'>('telemetry');
   const [activeTab, setActiveTab] = useState<'manual' | 'dataset' | 'document'>('manual');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [latestMetrics, setLatestMetrics] = useState<TelemetryRecord | null>(null);
   const [history, setHistory] = useState<TelemetryRecord[]>([]);
-
-  // Day-10: Processed Battery Data State
-  const [processedData, setProcessedData] = useState<ProcessedBatteryData | null>(null);
-  const [dailySummaries, setDailySummaries] = useState<DailyBatterySummary[]>([]);
-  const [processedLoading, setProcessedLoading] = useState(false);
 
   // File inputs
   const datasetInputRef = useRef<HTMLInputElement>(null);
@@ -49,19 +42,9 @@ const BatteryTelemetryPage = () => {
   useEffect(() => {
     if (selectedVehicleId) {
       refreshData();
-      refreshProcessedData();
-
-      // Auto-refresh processed data every 30 seconds
-      const interval = setInterval(() => {
-        refreshProcessedData();
-      }, 30000);
-
-      return () => clearInterval(interval);
     } else {
       setLatestMetrics(null);
       setHistory([]);
-      setProcessedData(null);
-      setDailySummaries([]);
     }
   }, [selectedVehicleId]);
 
@@ -97,26 +80,6 @@ const BatteryTelemetryPage = () => {
     }
   };
 
-  const refreshProcessedData = useCallback(async () => {
-    if (!selectedVehicleId) return;
-    try {
-      setProcessedLoading(true);
-      // Add cache buster and force fresh data
-      const timestamp = Date.now();
-      const [processed, summaries] = await Promise.all([
-        processedBatteryService.getLatestProcessedBattery(selectedVehicleId, timestamp),
-        processedBatteryService.getDailyBatterySummary(selectedVehicleId, timestamp)
-      ]);
-      setProcessedData(processed || null);
-      setDailySummaries(summaries || []);
-    } catch (err) {
-      console.error("Failed to refresh processed data", err);
-      setProcessedData(null);
-      setDailySummaries([]);
-    } finally {
-      setProcessedLoading(false);
-    }
-  }, [selectedVehicleId]);
 
   const handleManualSubmit = async () => {
     if (!selectedVehicleId) return showError("Please select a vehicle.");
@@ -185,70 +148,15 @@ const BatteryTelemetryPage = () => {
     return null;
   };
 
-  const getTemperatureColor = (temp: number): string => {
-    if (temp > 45) return '#ef4444'; // red
-    if (temp > 35) return '#f59e0b'; // yellow
-    return '#10b981'; // green
-  };
-
-  const formatTimestamp = (timestamp: string | undefined): string => {
-    if (!timestamp) return 'Just now';
-    return new Date(timestamp).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
 
   return (
     <div className="telemetry-container">
       {renderToast()}
       <Navbar activeTab='telemetry' /> {/* Pass standard props, might need updates to Navbar if strict typing */}
 
-      <div className="telemetry-header-section">
-        <div className="page-title">
-          <span>Battery Management</span>
-        </div>
 
-        <div className="vehicle-selector">
-          <span style={{ fontWeight: 600, color: '#4b5563' }}>Active Vehicle:</span>
-          <select
-            id="vehicleSelect"
-            name="vehicleId"
-            className="vehicle-select"
-            value={selectedVehicleId}
-            onChange={(e) => setSelectedVehicleId(e.target.value)}
-          >
-            <option value="" disabled>Select a vehicle...</option>
-            {vehicles.map(v => (
-              <option key={v.id} value={v.id}>{v.nickname || `${v.make} ${v.model}`}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Main Tab Navigation */}
-      <div className="main-tabs-container">
-        <button
-          className={`main-tab-btn ${mainTab === 'telemetry' ? 'active' : ''}`}
-          onClick={() => setMainTab('telemetry')}
-        >
-          Telemetry Ingestion
-        </button>
-        <button
-          className={`main-tab-btn ${mainTab === 'health' ? 'active' : ''}`}
-          onClick={() => setMainTab('health')}
-        >
-          <FaHeart style={{ marginRight: '0.5rem' }} />
-          Battery Health
-        </button>
-      </div>
-
-      {/* Telemetry Tab Content */}
-      {mainTab === 'telemetry' && (
-        <div className="telemetry-grid">
-          {/* Left Column: Ingestion */}
+      <div className="telemetry-grid">
+        {/* Left Column: Ingestion */}
           <div className="ingestion-section">
             <div className="tabs-container">
               <button
@@ -276,11 +184,11 @@ const BatteryTelemetryPage = () => {
                 <div className="manual-form">
                   <div className="metrics-grid">
                     <div className="form-group">
-                      <label className="form-label" htmlFor="socInput">State of Charge (SoC): {manualForm.soc}%</label>
+                      <label className="form-label" htmlFor="socInput">State of Charge (SoC) %</label>
                       <input
                         id="socInput"
                         name="soc"
-                        type="range" className="range-slider" min="0" max="100"
+                        type="number" className="form-input" min="0" max="100"
                         value={manualForm.soc}
                         onChange={e => setManualForm({ ...manualForm, soc: Number(e.target.value) })}
                       />
@@ -449,17 +357,39 @@ const BatteryTelemetryPage = () => {
             </div>
           </div>
 
-          {/* Right Column: Latest Metrics */}
+          {/* Right Column: Vehicle Selector + Latest Metrics */}
           <div className="metrics-section">
+
+            {/* Vehicle Selector Card */}
+            <div className="vehicle-selector-card">
+              <span className="vehicle-selector-label">Active Vehicle</span>
+              <select
+                id="vehicleSelect"
+                name="vehicleId"
+                className="vehicle-select"
+                value={selectedVehicleId}
+                onChange={(e) => setSelectedVehicleId(e.target.value)}
+              >
+                <option value="" disabled>Select a vehicle...</option>
+                {vehicles.map(v => (
+                  <option key={v.id} value={v.id}>{v.nickname || `${v.make} ${v.model}`}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="tele-card">
               <div className="tele-card-title">Latest Metrics</div>
               {latestMetrics ? (
                 <div className="metrics-grid" style={{ gridTemplateColumns: '1fr' }}>
-                  <div className="metric-item" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981' }}>
-                    <span className="metric-label">State of Charge</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <FaBatteryThreeQuarters color="#10b981" size={24} />
-                      <span className="metric-value" style={{ fontSize: '2rem', color: '#065f46' }}>{latestMetrics.soc}%</span>
+                  {/* SoC with progress bar */}
+                  <div className="metric-item soc-metric-item" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span className="metric-label">State of Charge</span>
+                      <FaBatteryThreeQuarters color="#10b981" size={18} />
+                    </div>
+                    <span className="metric-value" style={{ fontSize: '2rem', color: '#065f46', display: 'block', marginTop: '0.25rem' }}>{latestMetrics.soc}%</span>
+                    <div className="soc-bar-track">
+                      <div className="soc-bar-fill" style={{ width: `${latestMetrics.soc}%` }} />
                     </div>
                   </div>
 
@@ -524,189 +454,8 @@ const BatteryTelemetryPage = () => {
               )}
             </div>
           </div>
-        </div>
-      )}
+      </div>
 
-      {/* Battery Health Tab Content */}
-      {mainTab === 'health' && (
-        <div className="health-section">
-          <div className="health-grid">
-            {/* Processed Metrics Panel */}
-            <div className="tele-card">
-              <div className="tele-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Processed Battery Metrics</span>
-                <button
-                  onClick={() => refreshProcessedData()}
-                  className="refresh-btn"
-                  disabled={processedLoading}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: processedLoading ? '#d1d5db' : '#10b981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: processedLoading ? 'not-allowed' : 'pointer',
-                    fontSize: '0.9rem',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  <span style={{ fontSize: '1.2rem' }}>↻</span> {processedLoading ? 'Refreshing...' : 'Refresh'}
-                </button>
-              </div>
-              {processedData ? (
-                <div className="processed-metrics-grid">
-                  <div className="processed-metric-card primary-metric">
-                    <span className="metric-label">Normalized State of Charge</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
-                      <FaBatteryThreeQuarters size={32} color="#10b981" />
-                      <span className="metric-value-large">{processedData.soc}%</span>
-                    </div>
-                  </div>
-
-                  <div className="processed-metric-card">
-                    <span className="metric-label">Smoothed Temperature</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                      <FaThermometerHalf size={24} color={getTemperatureColor(processedData.temperature)} />
-                      <span className="metric-value" style={{ color: getTemperatureColor(processedData.temperature) }}>
-                        {processedData.temperature}°C
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>After noise filtering</div>
-                  </div>
-
-                  <div className="processed-metric-card">
-                    <span className="metric-label">Voltage</span>
-                    <div className="metric-value" style={{ marginTop: '0.5rem' }}>{processedData.voltage}V</div>
-                  </div>
-
-                  <div className="processed-metric-card">
-                    <span className="metric-label">Current</span>
-                    <div className="metric-value" style={{ marginTop: '0.5rem' }}>{processedData.current}A</div>
-                  </div>
-
-                  <div className="processed-metric-card">
-                    <span className="metric-label">Charging State</span>
-                    <div style={{ marginTop: '0.5rem', fontWeight: 600, fontSize: '1rem', color: processedData.chargingState === 'CHARGING' ? '#10b981' : processedData.chargingState === 'DISCHARGING' ? '#f59e0b' : '#6b7280' }}>
-                      {processedData.chargingState === 'CHARGING' && '⚡ Charging'}
-                      {processedData.chargingState === 'DISCHARGING' && '🔋 Discharging'}
-                      {processedData.chargingState === 'IDLE' && '⏸️ Idle'}
-                    </div>
-                  </div>
-
-                  <div className="processed-metric-card">
-                    <span className="metric-label">Data Source</span>
-                    <div style={{ marginTop: '0.5rem' }}>
-                      <span className={`source-badge source-${processedData.source.toLowerCase()}`}>
-                        {processedData.source}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="processed-metric-card full-width">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <span className="metric-label">Last Updated</span>
-                        <div style={{ marginTop: '0.25rem', fontSize: '0.9rem', color: '#374151' }}>
-                          <FaClock style={{ marginRight: '0.5rem', fontSize: '0.8rem' }} />
-                          {formatTimestamp(processedData.timestamp)}
-                        </div>
-                      </div>
-                      <div className={`quality-badge ${processedData.isComplete ? 'complete' : 'partial'}`}>
-                        {processedData.isComplete ? '🟢 Up-to-date' : '🟡 Partial data'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '3rem', color: '#9ca3af' }}>
-                  <MdElectricCar size={56} style={{ opacity: 0.3, marginBottom: '1rem' }} />
-                  <p style={{ fontWeight: 500, fontSize: '1rem' }}>No processed battery data yet</p>
-                  <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>Add telemetry data to begin tracking battery health</p>
-                </div>
-              )}
-            </div>
-
-            {/* Data Quality & Trust Indicators */}
-            {processedData && (
-              <div className="tele-card">
-                <div className="tele-card-title">Data Quality Status</div>
-                <div className="quality-info">
-                  <div className="quality-score-container">
-                    <div className="quality-score-label">Data Quality Score</div>
-                    <div className="quality-score-value">{(processedData.dataQualityScore * 100).toFixed(0)}%</div>
-                    <div className="quality-progress-bar">
-                      <div
-                        className="quality-progress-fill"
-                        style={{ width: `${processedData.dataQualityScore * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                  <div className="quality-message">
-                    {processedData.isComplete ? (
-                      <div style={{ color: '#059669' }}>
-                        ✓ All sensor readings are complete and validated
-                      </div>
-                    ) : (
-                      <div style={{ color: '#d97706' }}>
-                        ⚠ Some values were normalized or corrected for accuracy
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Daily Battery Summary */}
-          <div className="tele-card" style={{ marginTop: '2rem' }}>
-            <div className="tele-card-title">Daily Battery Summary</div>
-            {dailySummaries.length > 0 ? (
-              <div className="daily-summary-grid">
-                {dailySummaries.slice(0, 10).map((summary, idx) => (
-                  <div key={idx} className="daily-card">
-                    <div className="daily-card-header">
-                      <span className="daily-date">📅 {new Date(summary.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                    </div>
-                    <div className="daily-metrics">
-                      <div className="daily-metric-row">
-                        <span className="daily-metric-label">Avg SoC</span>
-                        <span className="daily-metric-value">{summary.avgSoc.toFixed(1)}%</span>
-                      </div>
-                      <div className="daily-metric-row">
-                        <span className="daily-metric-label">Peak Temp</span>
-                        <span className="daily-metric-value" style={{ color: getTemperatureColor(summary.maxTemperature) }}>
-                          {summary.maxTemperature}°C
-                        </span>
-                      </div>
-                      <div className="daily-metric-row">
-                        <span className="daily-metric-label">Avg Voltage</span>
-                        <span className="daily-metric-value">{summary.avgVoltage.toFixed(1)}V</span>
-                      </div>
-                      <div className="daily-metric-row">
-                        <span className="daily-metric-label">Charge Current</span>
-                        <span className="daily-metric-value">{summary.totalChargeCurrent.toFixed(1)}A</span>
-                      </div>
-                      <div className="daily-metric-row">
-                        <span className="daily-metric-label">Cycle Increment</span>
-                        <span className="daily-metric-value">{summary.dailyCycleIncrement.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
-                <p style={{ fontWeight: 500 }}>No daily summaries available yet</p>
-                <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>Daily summaries will appear as battery data is processed over time</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Toast Styles */}
       <style>{`

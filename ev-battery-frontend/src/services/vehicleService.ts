@@ -4,7 +4,8 @@ import type { Vehicle, VehicleDraft, VehicleFormData, UploadDocumentResponse } f
 export const vehicleService = {
   // Manual Entry: Create a new vehicle
   createVehicle: async (data: VehicleFormData): Promise<Vehicle> => {
-    const response = await api.post<Vehicle>('/vehicles', data);
+    const payload = { ...data, vehicleType: data.vehicleType?.toUpperCase() };
+    const response = await api.post<Vehicle>('/vehicles', payload);
     return response.data;
   },
 

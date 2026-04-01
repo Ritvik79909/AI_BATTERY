@@ -20,9 +20,7 @@ public class StationRecommendationController {
 
     private final StationRecommendationService recommendationService;
 
-    /**
-     * Get recommended charging stations based on location and filters
-     */
+
     @GetMapping("/recommend")
     public ResponseEntity<?> getRecommendations(
             @AuthenticationPrincipal CustomUserDetails user,
@@ -61,9 +59,7 @@ public class StationRecommendationController {
         }
     }
 
-    /**
-     * Get detailed information for a specific station
-     */
+
     @GetMapping("/{stationId}")
     public ResponseEntity<?> getStationDetails(
             @AuthenticationPrincipal CustomUserDetails user,
@@ -86,9 +82,7 @@ public class StationRecommendationController {
         }
     }
 
-    /**
-     * Get filter options for UI
-     */
+
     @GetMapping("/filters")
     public ResponseEntity<?> getFilterOptions() {
         return ResponseEntity.ok(Map.of(

@@ -10,9 +10,7 @@ public class LocationService {
 
     private static final int EARTH_RADIUS_KM = 6371;
 
-    /**
-     * Calculate distance between two coordinates using Haversine formula
-     */
+
     public double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
         double latDistance = Math.toRadians(lat2 - lat1);
         double lonDistance = Math.toRadians(lon2 - lon1);
@@ -26,17 +24,12 @@ public class LocationService {
         return EARTH_RADIUS_KM * c;
     }
 
-    /**
-     * Calculate if a point is within radius of another point
-     */
+
     public boolean isWithinRadius(double lat1, double lon1, double lat2, double lon2, double radiusKm) {
         return calculateDistance(lat1, lon1, lat2, lon2) <= radiusKm;
     }
 
-    /**
-     * Calculate bounding box coordinates for a given point and radius
-     * Useful for database queries
-     */
+
     public BoundingBox calculateBoundingBox(double latitude, double longitude, double radiusKm) {
         double latDelta = Math.toDegrees(radiusKm / EARTH_RADIUS_KM);
         double lonDelta = Math.toDegrees(radiusKm / (EARTH_RADIUS_KM * Math.cos(Math.toRadians(latitude))));

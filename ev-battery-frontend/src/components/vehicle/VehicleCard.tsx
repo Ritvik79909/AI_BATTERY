@@ -58,7 +58,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onEdit, onDelete }) 
           </div>
           <div className="vc-stat">
             <span className="vc-stat-label">Vehicle Type</span>
-            <span className="vc-stat-value">{vehicle.vehicleType}</span>
+            <span className="vc-stat-value">{vehicle.vehicleType?.toUpperCase()}</span>
           </div>
         </div>
 

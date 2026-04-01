@@ -317,8 +317,9 @@ const StationListPage: React.FC = () => {
               className="slp-panel-close"
               onClick={() => setIsPanelOpen(false)}
               aria-label="Close panel"
+              style={{ fontSize: '18px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              <FaTimes size={14} />
+              X
             </button>
           </div>
 

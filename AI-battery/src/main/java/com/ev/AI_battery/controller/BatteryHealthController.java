@@ -53,15 +53,7 @@ public class BatteryHealthController {
             @PathVariable Long vehicleId) {
 
         Vehicle vehicle = vehicleService.getUserVehicleById(user.getUser(), vehicleId);
-        BatteryDailySummary latest = getLatestSummaryOrDefault(vehicle);
-
-        SimulatedHealthResponse mlResult = mlService.predict(vehicle, latest);
-
-        return new SoHResponse(
-                mlResult.getSoh(),
-                mlResult.getSource().equals("ML_MODEL_DATASET") ? "AI Predicted" : "Healthy",
-                LocalDateTime.now()
-        );
+        return service.getSoH(vehicle);
     }
 
     @GetMapping("/soh-history/{vehicleId}")

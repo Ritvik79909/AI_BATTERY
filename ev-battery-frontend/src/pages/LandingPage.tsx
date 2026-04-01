@@ -19,12 +19,11 @@ const LandingPage = () => {
           <a href="#features" className="nav-link">Features</a>
           <a href="#how-it-works" className="nav-link">How it Works</a>
           <a href="#integrations" className="nav-link">Integrations</a>
-          <Link to="/login" className="nav-link">Sign In</Link>
         </div>
       </nav>
 
       <section className="hero-section">
-        <div className="hero-content">
+        <div className="landing-hero-content">
           <h1 className="hero-title">
             AI-Based Battery Optimization and Performance Management System
           </h1>
@@ -86,7 +85,7 @@ const LandingPage = () => {
             <div className="process-step">
               <span className="step-icon">📡</span>
               <h4 className="step-title">Data Collection</h4>
-              <p className="step-desc">Sensors collect real-time EV data</p>
+              <p className="step-desc">Manual real-time EV data Ingestion</p>
             </div>
             <div className="process-arrow">→</div>
             <div className="process-step">
@@ -98,7 +97,7 @@ const LandingPage = () => {
             <div className="process-step">
               <span className="step-icon">⚡</span>
               <h4 className="step-title">Optimization</h4>
-              <p className="step-desc">Smart charging & alerts sent to you</p>
+              <p className="step-desc">Smart charging & suggestions</p>
             </div>
           </div>
         </div>

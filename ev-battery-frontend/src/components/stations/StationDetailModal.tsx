@@ -28,7 +28,7 @@ const StationDetailModal: React.FC<StationDetailModalProps> = ({ station, onClos
   }, [station.id]);
 
   const handleDirections = () => {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lon}`;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lon}&travelmode=driving`;
     window.open(url, '_blank');
   };
 

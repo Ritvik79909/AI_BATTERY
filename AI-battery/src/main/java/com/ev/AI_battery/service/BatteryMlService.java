@@ -3,94 +3,165 @@ package com.ev.AI_battery.service;
 import com.ev.AI_battery.dto.SimulatedHealthResponse;
 import com.ev.AI_battery.model.BatteryDailySummary;
 import com.ev.AI_battery.model.Vehicle;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * ML Service for battery health prediction using XGBoost model
+ * 
+ * Input format for XGBoost model:
+ * [Voltage_measured, Current_measured, Temperature_measured, SoC, cycle_number]
+ */
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class BatteryMlService {
 
+    private final XGBoostModelService xgboostService;
+
+    /**
+     * Predict battery health metrics using XGBoost model
+     * 
+     * @param vehicle The vehicle entity
+     * @param summary Battery daily summary containing voltage, current, temp, SoC, cycles
+     * @return SimulatedHealthResponse with predicted metrics
+     */
     public SimulatedHealthResponse predict(Vehicle vehicle, BatteryDailySummary summary) {
         try {
-
-            double soc = summary.getAvgSoc() != null ? summary.getAvgSoc() : 75.0;
+            // Extract values from summary with defaults
             double voltage = summary.getAvgVoltage() != null ? summary.getAvgVoltage() : 3.7;
+            double current = summary.getTotalChargeCurrent() != null ? summary.getTotalChargeCurrent() : -1.5;
             double temp = summary.getMaxTemperature() != null ? summary.getMaxTemperature() : 25.0;
-            int cycles = (summary.getDailyCycleIncrement() != null ? summary.getDailyCycleIncrement() : 1) * 30;
+            double soc = summary.getAvgSoc() != null ? summary.getAvgSoc() : 75.0;
+            int cycles = summary.getDailyCycleIncrement() != null ? summary.getDailyCycleIncrement() : 100;
 
-            double degradationRate = calculateDegradation(soc, voltage, temp, cycles);
-            // In predict() method, replace soh calculation:
-            double soh = calculateSoH(soc, voltage, temp, cycles, degradationRate);
+            // Normalize uploaded telemetry units to model feature ranges.
+            voltage = normalizeVoltageForModel(voltage);
+            current = normalizeCurrentForModel(current);
+            temp = clamp(temp, -20.0, 60.0);
+            soc = clamp(soc, 0.0, 100.0);
+            cycles = Math.max(0, cycles);
 
+            // Get XGBoost prediction
+            // Input format: [Voltage_measured, Current_measured, Temperature_measured, SoC, cycle_number]
+            double predictedSoH = xgboostService.predictSoH(voltage, current, temp, soc, cycles);
 
-            // Generate realistic trend from your dataset
-            List<Double> degradationTrend = generateTrend(cycles, soh);
+            // Calculate RUL based on predicted SoH
+            int rulCycles = calculateRULCycles(predictedSoH);
+            int estimatedMonths = rulCycles / 30;  // Rough conversion to months
+            double degradationRate = (100.0 - predictedSoH) / Math.max(1, cycles);
 
-            log.info("ML Predict: Vehicle={}, SoH={}, Degradation={}%, Cycles={}",
-                    vehicle.getId(), soh, degradationRate, cycles);
+            // Generate SoH trend
+            List<Double> degradationTrend = generateTrend(cycles, predictedSoH);
+
+            log.info("XGBoost Prediction: Vehicle={}, SoH={}%, RUL={} cycles, Degradation={}%/cycle",
+                    vehicle.getId(), predictedSoH, rulCycles, String.format("%.3f", degradationRate));
 
             return new SimulatedHealthResponse(
-                    (int)(soh * 0.92),  // healthScore
-                    Math.round(soh * 10.0) / 10.0,  // soh
-                    (int)(1000 / (degradationRate + 0.1)),  // rulCycles
-                    (int)(33 / (degradationRate + 0.1)),  // estimatedMonths
-                    degradationTrend,
-                    "ML_MODEL_DATASET",  // Your dataset-powered
+                    (int) Math.round(predictedSoH * 0.95),  // healthScore (slightly conservative)
+                    Math.round(predictedSoH * 10.0) / 10.0,  // soh
+                    rulCycles,  // rulCycles
+                    estimatedMonths,  // estimatedMonths
+                    degradationTrend,  // degradationTrend
+                    "XGBOOST_MODEL",  // source - real model, not fallback
                     degradationRate
             );
 
         } catch (Exception e) {
-            log.error("ML Prediction failed, using fallback", e);
+            log.error("ML Prediction failed for vehicle {}, using fallback", vehicle.getId(), e);
             return fallbackResponse();
         }
     }
 
-    private double calculateDegradation(double soc, double voltage, double temp, int cycles) {
-        double cycleEffect = 0.08 * (cycles / 1000.0);  // Primary driver
-        double tempEffect = 0.02 * Math.max(0, (temp - 25) / 10);  // Temp stress
-        double voltageEffect = 0.01 * Math.max(0, (voltage - 3.7) / 0.3);  // Voltage stress
-        double socEffect = 0.005 * (100 - soc) / 100;  // Low SOC stress
-
-        return cycleEffect + tempEffect + voltageEffect + socEffect;
+    /**
+     * Calculate Remaining Useful Life (RUL) in cycles based on predicted SoH
+     * Assumes battery reaches end-of-life at 70% SoH
+     */
+    private int calculateRULCycles(double currentSoH) {
+        final double END_OF_LIFE_SOH = 70.0;
+        final int TOTAL_RATED_CYCLES = 1500;
+        
+        if (currentSoH <= END_OF_LIFE_SOH) {
+            return 0;
+        }
+        
+        // Simple linear extrapolation
+        double degradation = 100.0 - currentSoH;
+        double degradationRate = degradation / Math.max(1, TOTAL_RATED_CYCLES / 2);
+        
+        if (degradationRate <= 0) {
+            return TOTAL_RATED_CYCLES;
+        }
+        
+        double remainingDegradation = currentSoH - END_OF_LIFE_SOH;
+        int remainingCycles = (int) Math.round(remainingDegradation / degradationRate);
+        
+        return Math.max(0, Math.min(remainingCycles, TOTAL_RATED_CYCLES));
     }
 
-    private List<Double> generateTrend(int cycles, double currentSoh) {
+    /**
+     * Generate SoH degradation trend for visualization
+     */
+    private List<Double> generateTrend(int cycles, double currentSoH) {
         double startSoh = 100.0;
-        double totalDegradation = 100 - currentSoh;
-        int steps = 5;
-
+        double totalDegradation = Math.max(0, startSoh - currentSoH);
+        
         return Arrays.asList(
                 startSoh,
                 startSoh - (totalDegradation * 0.2),
                 startSoh - (totalDegradation * 0.45),
                 startSoh - (totalDegradation * 0.75),
-                currentSoh
+                currentSoH
         );
     }
 
+    /**
+     * Fallback response when XGBoost model is unavailable
+     */
     private SimulatedHealthResponse fallbackResponse() {
         return new SimulatedHealthResponse(
-                92, 94.5, 820, 27,
-                Arrays.asList(100.0, 99.2, 97.8, 95.3, 94.5),
-                "ML_MODEL_FALLBACK", 5.5
+                88,  // healthScore
+                88.5,  // soh
+                650,  // rulCycles
+                21,  // estimatedMonths
+                Arrays.asList(100.0, 97.5, 94.0, 91.0, 88.5),  // degradationTrend
+                "FALLBACK",  // source
+                0.08  // degradationRate
         );
     }
 
-    private double calculateSoH(double soc, double voltage, double temp, int cycles, double degradationRate) {
-        double baseSoh = 100 - degradationRate;
+    private double normalizeVoltageForModel(double voltage) {
+        double v = voltage;
 
-        // SoH modifiers from your dataset correlations
-        double tempModifier = Math.max(-2.0, (25 - temp) * 0.05);  // Optimal 25°C
-        double voltageModifier = Math.max(-1.5, (3.7 - voltage) * 0.8);  // Optimal 3.7V
-        double cycleModifier = -0.015 * (cycles / 1000.0);  // Linear cycle effect
+        // Common upload patterns: pack voltage (200-450V) or millivolts.
+        if (v > 20.0 && v <= 500.0) {
+            v = v / 100.0;
+        } else if (v > 500.0) {
+            v = v / 1000.0;
+        }
 
-        return Math.max(70.0, Math.min(100.0, baseSoh + tempModifier + voltageModifier + cycleModifier));
+        return clamp(v, 2.7, 4.2);
+    }
+
+    private double normalizeCurrentForModel(double current) {
+        double c = current;
+
+        // If current is in mA-like scale, reduce to A-like scale.
+        if (Math.abs(c) > 100.0) {
+            c = c / 1000.0;
+        } else if (Math.abs(c) > 20.0) {
+            c = c / 10.0;
+        }
+
+        return clamp(c, -5.0, 5.0);
+    }
+
+    private double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
     }
 
 }

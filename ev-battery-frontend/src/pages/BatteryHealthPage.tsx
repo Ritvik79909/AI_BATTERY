@@ -59,7 +59,7 @@ const CircularGauge: React.FC<CircularGaugeProps> = ({ value, color }) => {
       <circle
         cx={cx} cy={cy} r={radius}
         fill="none"
-        stroke="rgba(255,255,255,0.15)"
+        stroke="rgba(0,0,0,0.08)"
         strokeWidth={stroke}
       />
       {/* Value arc */}
@@ -177,9 +177,6 @@ const BatteryHealthPage: React.FC = () => {
     return '#f87171';                   // red
   };
 
-  const degradationData = simData?.degradationTrend?.map((soh, i) => ({
-    cycle: i + 1, soh
-  })) || [];
 
   const hasData = scoreData || sohData || rulData || simData;
 
@@ -245,19 +242,18 @@ const BatteryHealthPage: React.FC = () => {
                       <CircularGauge value={gaugeValue} color={getGaugeColor(healthScore)} />
                       <div className="hero-gauge-center">
                         <div className="hero-score-number">{gaugeValue}</div>
-                        <div className="hero-score-pct">/ 100</div>
                       </div>
                     </div>
 
                     {/* Text */}
                     <div className="hero-text">
-                      <h1 className="hero-label">{healthLabel}</h1>
-                      <p className="hero-sub">Combined AI Analysis of SoH, RUL &amp; Usage</p>
-                      {simData?.source && (
-                        <div className="hero-source-badge">
-                          🧠 {simData.source}
-                        </div>
-                      )}
+                      <h2 className="hero-title">Battery Health Score</h2>
+                      <div
+                        className="hero-label"
+                        style={{ color: healthScore >= 80 ? '#16a34a' : healthScore >= 60 ? '#d97706' : '#dc2626' }}
+                      >
+                        {healthLabel}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -294,137 +290,70 @@ const BatteryHealthPage: React.FC = () => {
                   />
                 </div>
 
-                {/* ━━━ 3. INTERPRETATION MESSAGE ━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-                <div className="interpretation-card">
-                  <div className={`interpretation-inner ${healthScore >= 80
-                    ? 'interpretation-excellent'
-                    : healthScore >= 60
-                      ? 'interpretation-moderate'
-                      : 'interpretation-poor'
-                    }`}>
-                    <div className="interpretation-icon">
-                      {healthScore >= 80 ? '✅' : healthScore >= 60 ? '⚠️' : '🚨'}
-                    </div>
-                    <div>
-                      <h3 className="interpretation-title">
-                        {healthScore >= 80
-                          ? 'Excellent Condition'
-                          : healthScore >= 60
-                            ? 'Monitor Usage'
-                            : 'Action Required'}
-                      </h3>
-                      <p className="interpretation-body">
-                        {healthScore >= 80
-                          ? 'Your battery is in excellent condition. Continue maintaining healthy charging habits and avoid extreme temperatures.'
-                          : healthScore >= 60
-                            ? 'Moderate degradation detected. Optimize charging patterns and avoid deep discharges for longer battery life.'
-                            : 'Battery health is declining significantly. A professional assessment is recommended before long trips.'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
                 {/* ━━━ 3b. AI EXPLANATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
                 <BatteryExplanation
                   vehicleId={selectedVehicleId}
                   healthScore={healthScore}
                 />
 
-                {/* ━━━ 4. SoH TREND CHART ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-                <div className="chart-card">
-                  <h3 className="chart-card-title">
-                    <FaBatteryFull className="text-emerald-500" />
-                    SoH Trend Over Time
-                  </h3>
-                  {sohHistory.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={280}>
-                      <LineChart data={sohHistory}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                        <XAxis
-                          dataKey="timestamp"
-                          tickFormatter={(ts) => new Date(ts).toLocaleDateString()}
-                          stroke="#9ca3af" tick={{ fontSize: 12 }}
-                        />
-                        <YAxis domain={['auto', 'auto']} unit="%" stroke="#9ca3af" tick={{ fontSize: 12 }} />
-                        <Tooltip
-                          labelFormatter={(ts) => new Date(ts).toLocaleString()}
-                          formatter={(v: any) => [`${Number(v).toFixed(1)}%`, 'SoH']}
-                          contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                        />
-                        <Line type="monotone" dataKey="soh" stroke="#10b981" strokeWidth={3}
-                          dot={{ fill: '#10b981', r: 4 }} activeDot={{ r: 6, fill: '#fff', stroke: '#10b981', strokeWidth: 2 }} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="chart-empty">No SoH history yet. Upload more telemetry data.</div>
-                  )}
-                </div>
-
-                {/* ━━━ 5. RUL TREND CHART ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-                <div className="chart-card chart-card--orange">
-                  <h3 className="chart-card-title">
-                    🔋 RUL Prediction History
-                  </h3>
-                  {rulHistory.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={280}>
-                      <LineChart data={rulHistory}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#fef3c7" />
-                        <XAxis
-                          dataKey="timestamp"
-                          tickFormatter={(unix) => new Date(unix).toLocaleDateString()}
-                          stroke="#9ca3af" tick={{ fontSize: 12 }}
-                        />
-                        <YAxis stroke="#9ca3af" tick={{ fontSize: 12 }} />
-                        <Tooltip
-                          labelFormatter={(unix) => new Date(unix).toLocaleString()}
-                          formatter={(v: any) => [`${Number(v).toFixed(0)} cycles`, 'RUL']}
-                          contentStyle={{ borderRadius: '10px', border: '1px solid #fed7aa', boxShadow: '0 4px 12px rgba(249,115,22,0.15)' }}
-                        />
-                        <Line type="monotone" dataKey="rul" stroke="#f97316" strokeWidth={4}
-                          dot={{ fill: '#f97316', r: 5 }} activeDot={{ r: 7, fill: '#fff', stroke: '#ea580c', strokeWidth: 2 }} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="chart-empty">No RUL history yet. More telemetry needed.</div>
-                  )}
-                </div>
-
-                {/* ━━━ 6. DEGRADATION CHART ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-                {simData && degradationData.length > 0 && (
-                  <div className="chart-card chart-card--red">
-                    <h3 className="chart-card-title">📉 Projected Degradation Trend</h3>
-                    <ResponsiveContainer width="100%" height={280}>
-                      <LineChart data={degradationData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#fee2e2" />
-                        <XAxis dataKey="cycle"
-                          label={{ value: 'Cycle', position: 'insideBottom', offset: -5 }}
-                          stroke="#6b7280" />
-                        <YAxis domain={[0, 100]}
-                          label={{ value: 'SoH (%)', angle: -90, position: 'insideLeft' }}
-                          stroke="#6b7280" />
-                        <Tooltip
-                          content={({ active, payload, label }) => {
-                            if (active && payload?.length) {
-                              return (
-                                <div className="bg-white p-3 border border-red-100 shadow-lg rounded-xl">
-                                  <p className="font-semibold text-gray-700">Cycle {label}</p>
-                                  <p className="text-red-500 font-bold">SoH: {Number(payload[0].value).toFixed(1)}%</p>
-                                  <p className="text-xs text-gray-400 mt-1">Source: {simData?.source}</p>
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                        <Line type="monotone" dataKey="soh" stroke="#ef4444"
-                          strokeWidth={2} strokeDasharray="6 4" dot={false} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                    <p className="text-center text-sm text-gray-400 mt-3">
-                      Degradation Rate: <strong className="text-gray-600">{simData.degradationRate}%</strong>
-                    </p>
+                {/* ━━━ 4 & 5. CHARTS SIDE BY SIDE ━━━━━━━━━━━━━━━━━━━━━━━ */}
+                <div className="charts-grid">
+                  <div className="chart-card">
+                    <h3 className="chart-card-title">
+                      <FaBatteryFull className="text-emerald-500" />
+                      SoH Trend
+                    </h3>
+                    {sohHistory.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={220}>
+                        <LineChart data={sohHistory}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis
+                            dataKey="timestamp"
+                            tickFormatter={(ts) => new Date(ts).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                            stroke="#9ca3af" tick={{ fontSize: 11 }}
+                          />
+                          <YAxis domain={['auto', 'auto']} unit="%" stroke="#9ca3af" tick={{ fontSize: 11 }} />
+                          <Tooltip
+                            labelFormatter={(ts) => new Date(ts).toLocaleString()}
+                            formatter={(v: any) => [`${Number(v).toFixed(1)}%`, 'SoH']}
+                            contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                          />
+                          <Line type="monotone" dataKey="soh" stroke="#10b981" strokeWidth={2.5}
+                            dot={{ fill: '#10b981', r: 3 }} activeDot={{ r: 5, fill: '#fff', stroke: '#10b981', strokeWidth: 2 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="chart-empty">No SoH history yet.</div>
+                    )}
                   </div>
-                )}
+
+                  <div className="chart-card">
+                    <h3 className="chart-card-title">🔋 RUL Prediction</h3>
+                    {rulHistory.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={220}>
+                        <LineChart data={rulHistory}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0fdf4" />
+                          <XAxis
+                            dataKey="timestamp"
+                            tickFormatter={(unix) => new Date(unix).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                            stroke="#9ca3af" tick={{ fontSize: 11 }}
+                          />
+                          <YAxis stroke="#9ca3af" tick={{ fontSize: 11 }} />
+                          <Tooltip
+                            labelFormatter={(unix) => new Date(unix).toLocaleString()}
+                            formatter={(v: any) => [`${Number(v).toFixed(0)} cycles`, 'RUL']}
+                            contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                          />
+                          <Line type="monotone" dataKey="rul" stroke="#10b981" strokeWidth={2.5}
+                            strokeDasharray="6 3"
+                            dot={{ fill: '#10b981', r: 3 }} activeDot={{ r: 5, fill: '#fff', stroke: '#10b981', strokeWidth: 2 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="chart-empty">No RUL history yet.</div>
+                    )}
+                  </div>
+                </div>
 
                 {/* ━━━ 7. EXPLANATION HISTORY ━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
                 <ExplanationHistory vehicleId={selectedVehicleId} />

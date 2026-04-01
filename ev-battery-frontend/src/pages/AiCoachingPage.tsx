@@ -254,28 +254,12 @@ Feel free to ask me anything — from charging tips to degradation causes!`,
             </div>
           </div>
 
-          {/* Explanation context badge */}
-          {(latestExplanation || explanationLoading) && (
-            <div className={`aic-context-badge ${explanationLoading ? 'aic-context-badge--loading' : ''}`}>
-              {explanationLoading ? (
-                <>
-                  <div className="aic-context-spinner" />
-                  <span>Loading AI context…</span>
-                </>
-              ) : (
-                <>
-                  <span>💡</span>
-                  <span>Using explanation context</span>
-                </>
-              )}
-            </div>
-          )}
 
           {/* Info footer */}
-          <div className="aic-sidebar-footer">
+          {/* <div className="aic-sidebar-footer">
             <span>🔒</span>
             <span>Your data is private &amp; secure</span>
-          </div>
+          </div> */}
         </aside>
 
         {/* ─── Chat Area ───────────────────────────────────────── */}
@@ -417,11 +401,10 @@ Feel free to ask me anything — from charging tips to degradation causes!`,
                 {loading ? (
                   <div className="aic-send-spinner" />
                 ) : (
-                  <FaPaperPlane size={18} />
+                  <FaPaperPlane size={250} />
                 )}
               </button>
             </div>
-            <p className="aic-input-hint">Press Enter to send · AI responses are advisory only</p>
           </div>
         </main>
       </div>

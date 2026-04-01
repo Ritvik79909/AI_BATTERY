@@ -25,6 +25,7 @@ public class BatteryTelemetryController {
     private final DocumentTextExtractorService documentTextExtractorService; // Added
     private final TelemetryDocumentParser telemetryDocumentParser; // Added
     private final TelemetryCsvParser telemetryCsvParser; // Added (if used in uploadDataset)
+    private final BatteryDailySummaryAggregationService dailySummaryAggregationService;
     private final BatteryTelemetryRepository telemetryRepository;
 
     @PostMapping("/ingest")
@@ -85,6 +86,7 @@ public class BatteryTelemetryController {
                 telemetryDocumentParser.parse(text);
 
         parsed.forEach(t -> telemetryService.ingest(vehicle, t));
+        dailySummaryAggregationService.refreshSummariesForTelemetry(vehicle, parsed);
 
         return parsed;
     }
@@ -105,6 +107,7 @@ public class BatteryTelemetryController {
                 telemetryCsvParser.parse(file);
 
         parsed.forEach(t -> telemetryService.ingest(vehicle, t));
+        dailySummaryAggregationService.refreshSummariesForTelemetry(vehicle, parsed);
 
         return parsed;
     }

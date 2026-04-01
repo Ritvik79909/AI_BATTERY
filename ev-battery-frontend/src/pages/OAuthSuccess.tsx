@@ -13,8 +13,43 @@ const OAuthSuccess = () => {
     if (token) {
       // Store token
       authService.saveToken(token);
-      // Redirect to dashboard
-      navigate('/dashboard', { replace: true });
+      
+      const initializeAndRedirect = async () => {
+        try {
+          const { vehicleService } = await import('../services/vehicleService');
+          const { telemetryService } = await import('../services/telemetryService');
+
+          const vehicles = await vehicleService.getVehicles();
+          if (!vehicles || vehicles.length === 0) {
+            navigate('/vehicle-setup', { replace: true });
+            return;
+          }
+
+          let hasTelemetry = false;
+          for (const v of vehicles) {
+            try {
+              const latest = await telemetryService.fetchLatestTelemetry(v.id);
+              if (latest && Object.keys(latest).length > 0) {
+                hasTelemetry = true;
+                break;
+              }
+            } catch (e) {
+              // Ignore errors (like 404 if no telemetry)
+            }
+          }
+
+          if (!hasTelemetry) {
+            navigate('/telemetry', { replace: true });
+            return;
+          }
+
+          navigate('/dashboard', { replace: true });
+        } catch (error) {
+          navigate('/dashboard', { replace: true });
+        }
+      };
+
+      initializeAndRedirect();
     } else {
       // No token found, redirect to login
       navigate('/login', { replace: true });

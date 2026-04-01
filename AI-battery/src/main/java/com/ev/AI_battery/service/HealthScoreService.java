@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -23,7 +24,7 @@ public class HealthScoreService {
     private final HealthScoreRepository scoreRepo;
 
     public HealthScoreResponse calculateScore(Vehicle vehicle) {
-        BatteryDailySummary latest = getLatestSummaryOrDefault(vehicle);
+        BatteryDailySummary latest = getAveragedSummaryOrDefault(vehicle);
         SimulatedHealthResponse ml = mlService.predict(vehicle, latest);
 
         ChargingSummary charging = getChargingSummary(vehicle);
@@ -97,16 +98,46 @@ public class HealthScoreService {
         return "Critical";
     }
 
-    private BatteryDailySummary getLatestSummaryOrDefault(Vehicle vehicle) {
-        List<BatteryDailySummary> summaries = dailyRepo.findByVehicleOrderByDateDesc(vehicle);
+    private BatteryDailySummary getAveragedSummaryOrDefault(Vehicle vehicle) {
+        List<BatteryDailySummary> summaries = dailyRepo.findByVehicleOrderByDateDesc(vehicle)
+                .stream()
+                .limit(7)
+                .toList();
+
         if (summaries.isEmpty()) {
             BatteryDailySummary mock = new BatteryDailySummary();
             mock.setMaxTemperature(25.0);
-            mock.setDailyCycleIncrement(1);
+            mock.setDailyCycleIncrement(100);
             mock.setAvgVoltage(3.7);
             mock.setAvgSoc(75.0);
+            mock.setTotalChargeCurrent(-1.5);
             return mock;
         }
-        return summaries.get(0);
+
+        BatteryDailySummary averaged = new BatteryDailySummary();
+        averaged.setDate(summaries.stream()
+                .map(BatteryDailySummary::getDate)
+                .max(Comparator.naturalOrder())
+                .orElse(null));
+        averaged.setAvgSoc(avgDouble(summaries, BatteryDailySummary::getAvgSoc, 75.0));
+        averaged.setMaxTemperature(avgDouble(summaries, BatteryDailySummary::getMaxTemperature, 25.0));
+        averaged.setAvgVoltage(avgDouble(summaries, BatteryDailySummary::getAvgVoltage, 3.7));
+        averaged.setTotalChargeCurrent(avgDouble(summaries, BatteryDailySummary::getTotalChargeCurrent, -1.5));
+        averaged.setDailyCycleIncrement((int) Math.round(
+                avgDouble(summaries, s -> s.getDailyCycleIncrement() != null ? s.getDailyCycleIncrement().doubleValue() : null, 100.0)
+        ));
+
+        return averaged;
+    }
+
+    private double avgDouble(List<BatteryDailySummary> summaries,
+                             java.util.function.Function<BatteryDailySummary, Double> getter,
+                             double fallback) {
+        return summaries.stream()
+                .map(getter)
+                .filter(v -> v != null)
+                .mapToDouble(Double::doubleValue)
+                .average()
+                .orElse(fallback);
     }
 }

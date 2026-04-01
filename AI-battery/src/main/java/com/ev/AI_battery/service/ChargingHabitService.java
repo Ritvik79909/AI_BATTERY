@@ -20,6 +20,7 @@ public class ChargingHabitService {
 
     private final ChargingSessionRepository sessionRepo;
     private final HabitAnalysisRepository analysisRepo;
+    private final BatteryDailySummaryRepository dailyRepo;
 
     public ChargingHabitSummary analyzeHabits(Vehicle vehicle) {
         // Get last 30 days sessions
@@ -30,7 +31,7 @@ public class ChargingHabitService {
                 .toList();
 
         if (recent.isEmpty()) {
-            return emptyHabitSummary();
+            return analyzeHabitsFromDailySummaries(vehicle);
         }
 
         // DAY-17 Metrics
@@ -115,5 +116,69 @@ public class ChargingHabitService {
     private ChargingHabitSummary emptyHabitSummary() {
         return new ChargingHabitSummary(0.0, 0.0, 0.0, 100.0, "Healthy",
                 Arrays.asList("No charging data yet"), "Start tracking sessions!");
+    }
+
+    private ChargingHabitSummary analyzeHabitsFromDailySummaries(Vehicle vehicle) {
+        List<BatteryDailySummary> recentDaily = dailyRepo.findByVehicleOrderByDateDesc(vehicle)
+                .stream()
+                .limit(30)
+                .toList();
+
+        if (recentDaily.isEmpty()) {
+            return emptyHabitSummary();
+        }
+
+        double fastPct = estimateFastChargingPercentageFromDaily(recentDaily);
+        double avgChargeDepth = estimateChargeDepthFromDaily(recentDaily);
+        double freqPerWeek = estimateFrequencyPerWeekFromDaily(recentDaily);
+        double habitScore = calculateHabitScore(fastPct, avgChargeDepth, freqPerWeek);
+        String riskLevel = getRiskLevel(habitScore);
+        List<String> insights = generateInsights(fastPct, avgChargeDepth, freqPerWeek);
+        insights.add("Derived from uploaded telemetry daily averages");
+        String recommendation = getRecommendation(riskLevel);
+
+        ChargingHabitAnalysis analysis = new ChargingHabitAnalysis();
+        analysis.setVehicle(vehicle);
+        analysis.setHabitScore(habitScore);
+        analysis.setFastChargingPercentage(fastPct);
+        analysis.setChargingFrequencyPerWeek(freqPerWeek);
+        analysis.setAverageChargeDepth(avgChargeDepth);
+        analysis.setRiskLevel(riskLevel);
+        analysis.setAnalysisTimestamp(LocalDateTime.now());
+        analysisRepo.save(analysis);
+
+        return new ChargingHabitSummary(
+                freqPerWeek, fastPct, avgChargeDepth, habitScore,
+                riskLevel, insights, recommendation
+        );
+    }
+
+    private double estimateFastChargingPercentageFromDaily(List<BatteryDailySummary> daily) {
+        long fastDays = daily.stream()
+                .filter(d -> d.getTotalChargeCurrent() != null && Math.abs(d.getTotalChargeCurrent()) >= 2.0)
+                .count();
+        return (fastDays * 100.0) / Math.max(1, daily.size());
+    }
+
+    private double estimateChargeDepthFromDaily(List<BatteryDailySummary> daily) {
+        double avgSoc = daily.stream()
+                .map(BatteryDailySummary::getAvgSoc)
+                .filter(v -> v != null)
+                .mapToDouble(Double::doubleValue)
+                .average()
+                .orElse(70.0);
+        // Approximate depth-of-discharge from daily average SoC when session detail is unavailable.
+        return Math.max(20.0, Math.min(95.0, 100.0 - avgSoc));
+    }
+
+    private double estimateFrequencyPerWeekFromDaily(List<BatteryDailySummary> daily) {
+        if (daily.size() <= 1) {
+            return Math.min(7.0, daily.size() * 7.0);
+        }
+        long daysSpan = ChronoUnit.DAYS.between(
+                daily.get(daily.size() - 1).getDate().atStartOfDay(),
+                daily.get(0).getDate().atStartOfDay()
+        ) + 1;
+        return (daily.size() * 7.0) / Math.max(1, daysSpan);
     }
 }

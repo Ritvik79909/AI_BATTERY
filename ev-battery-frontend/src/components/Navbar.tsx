@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FaBolt, FaCar } from 'react-icons/fa';
 import { authService } from '../services/authService';
-import { vehicleService } from '../services/vehicleService';
-import AlertBadge from './AlertBadge';
 import '../pages/Dashboard.css';
 
 interface NavbarProps {
@@ -14,13 +12,6 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [vehicleId, setVehicleId] = useState<string | null>(null);
-
-  useEffect(() => {
-    vehicleService.getVehicles().then((vehicles) => {
-      if (vehicles.length > 0) setVehicleId(vehicles[0].id);
-    }).catch(() => { });
-  }, []);
 
   const handleLogout = () => {
     authService.logout();
@@ -47,7 +38,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
       </div>
 
       <nav className="dash-nav">
-        {['Dashboard', 'Telemetry', 'Battery Health', 'Charging History', 'Charging Habits', 'Charging Optimization', 'Stations', 'AI Coach'].map((item) => (
+        {['Dashboard', 'Telemetry', 'Battery Health', 'Charging Optimization', 'Stations', 'AI Coach'].map((item) => (
           <div
             key={item}
             className={`dash-nav-item ${activeTab === item.toLowerCase() ? 'active' : ''}`}
@@ -56,10 +47,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                 navigate('/telemetry');
               } else if (item === 'Battery Health') {
                 navigate('/battery-health');
-              } else if (item === 'Charging History') {
-                navigate('/charging-history');
-              } else if (item === 'Charging Habits') {
-                navigate('/charging-habits');
+
               } else if (item === 'Charging Optimization') {
                 navigate('/charging-optimization');
               } else if (item === 'Stations') {
@@ -78,23 +66,35 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
         ))}
       </nav>
 
-      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-        {/* Alert Bell */}
-        <AlertBadge vehicleId={vehicleId} />
-
+      <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
         <div className="user-profile" onClick={handleVehicleSetup} title="Manage Vehicle">
           <div className="icon-btn">
-            <FaCar size={20} color="#4b5563" />
+            <FaCar size={25} color="#35884dff" />
           </div>
         </div>
 
-        <div className="user-profile" onClick={handleLogout} title="Click to Logout">
-          <img
-            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
-            alt="User"
-            className="avatar"
-          />
-        </div>
+        <button
+          onClick={handleLogout}
+          style={{
+            background: 'transparent',
+            color: '#29ba60ff',
+            border: '1px solid #3bbd5bff',
+            padding: '0.4rem 1rem',
+            borderRadius: '12px',
+            cursor: 'pointer',
+            fontWeight: 600,
+            fontSize: '0.9rem',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.background = '#fef2f2';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.background = 'transparent';
+          }}
+        >
+          Logout
+        </button>
       </div>
     </header>
   );

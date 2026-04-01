@@ -7,11 +7,9 @@ import Dashboard from './pages/Dashboard'
 import VehicleSetupPage from './pages/VehicleSetupPage'
 import BatteryTelemetryPage from './pages/BatteryTelemetryPage'
 import BatteryHealthPage from './pages/BatteryHealthPage'
-import ChargingHistoryPage from './pages/ChargingHistoryPage'
-import ChargingHabitsPage from './pages/ChargingHabitsPage'
+
 import ChargingOptimizationPage from './pages/ChargingOptimizationPage'
 import AiCoachingPage from './pages/AiCoachingPage'
-import AlertsHistoryPage from './pages/AlertsHistoryPage'
 import StationListPage from './pages/StationListPage'
 import PrivateRoute from './components/PrivateRoute'
 import './App.css'
@@ -60,22 +58,7 @@ function App() {
           </PrivateRoute>
         }
       />
-      <Route
-        path="/charging-history"
-        element={
-          <PrivateRoute>
-            <ChargingHistoryPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/charging-habits"
-        element={
-          <PrivateRoute>
-            <ChargingHabitsPage />
-          </PrivateRoute>
-        }
-      />
+
       <Route
         path="/charging-optimization"
         element={
@@ -89,14 +72,6 @@ function App() {
         element={
           <PrivateRoute>
             <AiCoachingPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/alerts"
-        element={
-          <PrivateRoute>
-            <AlertsHistoryPage />
           </PrivateRoute>
         }
       />

@@ -27,7 +27,8 @@ function loadGoogleMaps(apiKey: string): Promise<void> {
     if (mapsLoading) return;
     mapsLoading = true;
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    // loading=async silences the perf warning; marker library needed for AdvancedMarkerElement
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker`;
     script.async = true;
     script.defer = true;
     script.onload = () => {
@@ -40,7 +41,10 @@ function loadGoogleMaps(apiKey: string): Promise<void> {
   });
 }
 
-const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
+const MAPS_KEY   = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
+// AdvancedMarkerElement requires a mapId; DEMO_MAP_ID works for local dev.
+// Set VITE_GOOGLE_MAPS_MAP_ID in .env for production.
+const MAPS_MAP_ID = (import.meta.env.VITE_GOOGLE_MAPS_MAP_ID as string) || 'DEMO_MAP_ID';
 
 function reliabilityToColor(score: number): string {
   if (score >= 80) return '#10b981';
@@ -57,12 +61,14 @@ const StationMap: React.FC<StationMapProps> = ({
   onStationClick,
   mapType = 'roadmap',
 }) => {
-  const mapDivRef = useRef<HTMLDivElement>(null);
-  const googleMapRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.Marker[]>([]);
-  const userMarkerRef = useRef<google.maps.Marker | null>(null);
-  const circleRef = useRef<google.maps.Circle | null>(null);
-  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+  const mapDivRef      = useRef<HTMLDivElement>(null);
+  const googleMapRef   = useRef<google.maps.Map | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const markersRef     = useRef<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const userMarkerRef  = useRef<any>(null);
+  const circleRef      = useRef<google.maps.Circle | null>(null);
+  const infoWindowRef  = useRef<google.maps.InfoWindow | null>(null);
   const [mapReady, setMapReady] = React.useState(false);
 
   /* Load Google Maps SDK once */
@@ -71,13 +77,14 @@ const StationMap: React.FC<StationMapProps> = ({
     loadGoogleMaps(MAPS_KEY).then(() => setMapReady(true));
   }, []);
 
-  /* Initialize map (only once, guard from uploaded pattern) */
+  /* Initialize map (only once) */
   useEffect(() => {
     if (!mapReady || !mapDivRef.current || googleMapRef.current) return;
     googleMapRef.current = new window.google.maps.Map(mapDivRef.current, {
       center: { lat: Number(center.lat), lng: Number(center.lng) },
       zoom: 12,
       mapTypeId: mapType,
+      mapId: MAPS_MAP_ID,   // required for AdvancedMarkerElement
       styles: [
         { elementType: 'geometry', stylers: [{ color: '#f0f4f1' }] },
         { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#c9e8d4' }] },
@@ -107,20 +114,25 @@ const StationMap: React.FC<StationMapProps> = ({
     if (isNaN(pos.lat) || isNaN(pos.lng)) return;
     googleMapRef.current.panTo(pos);
 
-    // User location marker (blue dot)
-    userMarkerRef.current?.setMap(null);
-    userMarkerRef.current = new window.google.maps.Marker({
+    // Remove previous user marker
+    if (userMarkerRef.current) userMarkerRef.current.map = null;
+
+    // Blue dot for user location using a custom DOM element
+    const dot = document.createElement('div');
+    dot.style.cssText = [
+      'width:20px',
+      'height:20px',
+      'background:#3b82f6',
+      'border:3px solid #ffffff',
+      'border-radius:50%',
+      'box-shadow:0 2px 6px rgba(0,0,0,0.35)',
+    ].join(';');
+
+    userMarkerRef.current = new window.google.maps.marker.AdvancedMarkerElement({
       position: pos,
       map: googleMapRef.current,
       title: 'Your Location',
-      icon: {
-        path: window.google.maps.SymbolPath.CIRCLE,
-        scale: 10,
-        fillColor: '#3b82f6',
-        fillOpacity: 1,
-        strokeColor: '#ffffff',
-        strokeWeight: 3,
-      },
+      content: dot,
       zIndex: 999,
     });
 
@@ -147,11 +159,11 @@ const StationMap: React.FC<StationMapProps> = ({
     if (!googleMapRef.current || !mapReady) return;
 
     // Clear old station markers
-    markersRef.current.forEach((m) => m.setMap(null));
+    markersRef.current.forEach((m) => { m.map = null; });
     markersRef.current = [];
     infoWindowRef.current?.close();
 
-    const bounds = new window.google.maps.LatLngBounds();
+    const bounds    = new window.google.maps.LatLngBounds();
     const centerPos = { lat: Number(center.lat), lng: Number(center.lng) };
     if (!isNaN(centerPos.lat) && !isNaN(centerPos.lng)) {
       bounds.extend(centerPos);
@@ -160,26 +172,26 @@ const StationMap: React.FC<StationMapProps> = ({
     stations.forEach((station) => {
       const sLat = Number(station.lat);
       const sLng = Number(station.lon);
-      // Skip stations with invalid coordinates (API returning strings or nulls)
       if (isNaN(sLat) || isNaN(sLng)) return;
-      // Recommended = bright green; others colored by reliability score
+
       const isHighlighted = highlightedId === station.id;
       const color = station.recommended
         ? '#10b981'
         : reliabilityToColor(station.reliabilityScore);
 
-      const marker = new window.google.maps.Marker({
+      // PinElement provides the coloured pin shape
+      const pin = new window.google.maps.marker.PinElement({
+        background:   color,
+        borderColor:  '#ffffff',
+        glyphColor:   '#ffffff',
+        scale: station.recommended ? 1.3 : isHighlighted ? 1.2 : 0.9,
+      });
+
+      const marker = new window.google.maps.marker.AdvancedMarkerElement({
         position: { lat: sLat, lng: sLng },
         map: googleMapRef.current!,
         title: station.name,
-        icon: {
-          path: window.google.maps.SymbolPath.CIRCLE,
-          scale: station.recommended ? 13 : isHighlighted ? 12 : 9,
-          fillColor: color,
-          fillOpacity: isHighlighted ? 1 : 0.85,
-          strokeColor: '#ffffff',
-          strokeWeight: isHighlighted ? 3 : 2,
-        },
+        content: pin.element,
         zIndex: isHighlighted ? 100 : 1,
       });
 
@@ -197,7 +209,7 @@ const StationMap: React.FC<StationMapProps> = ({
 
       marker.addListener('click', () => {
         infoWindowRef.current?.close();
-        iw.open(googleMapRef.current!, marker);
+        iw.open({ anchor: marker, map: googleMapRef.current! });
         infoWindowRef.current = iw;
         onStationClick(station);
       });
@@ -208,7 +220,8 @@ const StationMap: React.FC<StationMapProps> = ({
 
     // Fit bounds to show all markers
     if (stations.length > 0) {
-      (googleMapRef.current as google.maps.Map).fitBounds(bounds, { top: 60, right: 60, bottom: 60, left: 60 });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (googleMapRef.current as any).fitBounds(bounds, { top: 60, right: 60, bottom: 60, left: 60 });
     }
   }, [stations, mapReady, highlightedId, onStationClick]); // eslint-disable-line react-hooks/exhaustive-deps
 
